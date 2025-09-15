@@ -15,7 +15,7 @@ export default function ArtistSettings() {
       const { data: u } = await supabase.auth.getUser()
       const id = u.user?.id
       if (!id) return
-      const { data } = await supabase.from('profiles').select('full_name,bio,avatar_url').eq('user_id', id).single()
+      const { data } = await supabase.from('profiles').select('full_name,bio,avatar_url').eq('id', id).single()
       if (data) {
         setName(data.full_name || '')
         setBio(data.bio || '')
@@ -42,7 +42,7 @@ export default function ArtistSettings() {
     const { data: u } = await supabase.auth.getUser()
     const id = u.user?.id
     if (!id) return
-    const { error } = await supabase.from('profiles').upsert({ id, name, bio, statement, avatar_url: avatarUrl })
+    const { error } = await supabase.from('profiles').upsert({ id, full_name: name, bio, statement, avatar_url: avatarUrl })
     setSaving(false)
     if (error) alert(error.message)
     else alert('Saved')
@@ -51,7 +51,7 @@ export default function ArtistSettings() {
   return (
     <div style={{ padding: 24, maxWidth: 800 }}>
       <Helmet>
-        <title>Artist Settings | Force Lite</title>
+        <title>Artist Settings | Artflow</title>
       </Helmet>
       <h1>Artist Settings</h1>
       <div style={{ display: 'grid', gap: 12 }}>

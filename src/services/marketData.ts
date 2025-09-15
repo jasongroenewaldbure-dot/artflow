@@ -2499,7 +2499,7 @@ class MarketDataService {
       // Get artist profile data
       const { data: profile, error: profileError } = await supabase
         .from('profiles')
-        .select('name, location, role')
+        .select('full_name, location, role')
         .eq('id', artistId)
         .single()
 
@@ -2721,7 +2721,7 @@ class MarketDataService {
       // Get artist profile for external search
       const { data: profile, error: profileError } = await supabase
         .from('profiles')
-        .select('name, instagram, website')
+        .select('full_name, instagram, website')
         .eq('id', artistId)
         .single()
 
@@ -2839,7 +2839,7 @@ class MarketDataService {
       // Get artist profile for analysis
       const { data: profile, error: profileError } = await supabase
         .from('profiles')
-        .select('name, location, instagram, website')
+        .select('full_name, location, instagram, website')
         .eq('id', artistId)
         .single()
 

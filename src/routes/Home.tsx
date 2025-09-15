@@ -20,22 +20,22 @@ export default function Home() {
     })()
   }, [])
   return (
-    <div style={{ padding: 24 }}>
+    <div className="home-page-container">
       <Helmet>
-        <title>Home | Force Lite</title>
+        <title>Home | ArtFlow</title>
       </Helmet>
-      <h1>Discover Art</h1>
-      {loading && <div>Loading…</div>}
-      {error && <div style={{ color: 'tomato' }}>{error}</div>}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: 16 }}>
+      <h1 className="home-page-title">Discover Art</h1>
+      {loading && <div className="home-loading">Loading…</div>}
+      {error && <div className="home-error">{error}</div>}
+      <div className="home-artworks-grid">
         {items.map((a) => (
-          <Link key={a.id} to={`/artwork/${a.id}`} style={{ border: '1px solid #222', padding: 12, borderRadius: 6 }}>
+          <Link key={a.id} to={`/artwork/${a.id}`} className="home-artwork-card">
             {a.primary_image_url ? (
-              <img src={a.primary_image_url} alt={a.title ?? 'Artwork'} style={{ width: '100%', height: 160, objectFit: 'cover', borderRadius: 4 }} />
+              <img src={a.primary_image_url} alt={a.title ?? 'Artwork'} className="home-artwork-image" />
             ) : (
-              <div style={{ background: '#222', height: 160, borderRadius: 4 }} />
+              <div className="home-artwork-image-placeholder">No Image</div>
             )}
-            <div style={{ marginTop: 8 }}>{a.title ?? 'Untitled'}</div>
+            <div className="home-artwork-title">{a.title ?? 'Untitled'}</div>
           </Link>
         ))}
       </div>

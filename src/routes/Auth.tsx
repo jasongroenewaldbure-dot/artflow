@@ -23,7 +23,7 @@ export default function Auth() {
   return (
     <div style={{ padding: 24, maxWidth: 480 }}>
       <Helmet>
-        <title>Sign in | Force Lite</title>
+        <title>Sign in | Artflow</title>
       </Helmet>
       <h1>Sign in</h1>
       <div style={{ display: 'grid', gap: 12 }}>

@@ -40,18 +40,11 @@ export default function Search() {
       <h1 className="search-page-title">Search</h1>
       
       {/* Search Header */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-md)', marginBottom: 'var(--space-lg)' }}>
-        <div style={{ position: 'relative', flex: 1 }}>
-          <Search size={20} style={{
-            position: 'absolute',
-            left: 'var(--space-sm)',
-            top: '50%',
-            transform: 'translateY(-50%)',
-            color: 'var(--muted)'
-          }} />
+      <div className="search-header">
+        <div className="search-input-container">
+          <Search size={20} className="search-input-icon" />
           <input
             className="search-input"
-            style={{ paddingLeft: '40px' }}
             value={q}
             onChange={(e) => setParams({ q: e.target.value })}
             placeholder="Search artists, artworks, galleries…"
@@ -59,27 +52,8 @@ export default function Search() {
         </div>
         
         <button
+          className="search-filters-btn"
           onClick={() => setShowAdvancedSearch(true)}
-          style={{
-            padding: 'var(--space-sm) var(--space-md)',
-            border: '1px solid var(--border)',
-            borderRadius: 'var(--radius-sm)',
-            backgroundColor: 'var(--bg)',
-            color: 'var(--fg)',
-            cursor: 'pointer',
-            transition: 'all 0.2s ease',
-            display: 'flex',
-            alignItems: 'center',
-            gap: 'var(--space-xs)'
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.backgroundColor = 'var(--bg-alt)'
-            e.currentTarget.style.borderColor = 'var(--primary)'
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.backgroundColor = 'var(--bg)'
-            e.currentTarget.style.borderColor = 'var(--border)'
-          }}
         >
           <SlidersHorizontal size={16} />
           Filters

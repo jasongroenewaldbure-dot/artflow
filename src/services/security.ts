@@ -1,129 +1,103 @@
-import { z } from 'zod'
+// Comprehensive Security and Validation Service
+import { supabase } from '../lib/supabase'
 
-// Input validation schemas
-export const artworkSchema = z.object({
-  title: z.string().min(1, 'Title is required').max(200, 'Title too long'),
-  description: z.string().max(2000, 'Description too long').optional(),
-  medium: z.string().max(100, 'Medium too long').optional(),
-  dimensions: z.string().max(100, 'Dimensions too long').optional(),
-  year: z.number().int().min(1000).max(new Date().getFullYear() + 1).optional(),
-  price: z.string().regex(/^\d+(\.\d{2})?$/, 'Invalid price format').optional(),
-  currency: z.string().length(3, 'Invalid currency code').optional(),
-  isForSale: z.boolean().default(false),
-  primaryImageUrl: z.string().url('Invalid image URL').optional(),
-  artistId: z.string().uuid('Invalid artist ID'),
-  tags: z.array(z.string().max(50)).max(10, 'Too many tags').optional()
-})
-
-export const artistSchema = z.object({
-  name: z.string().min(1, 'Name is required').max(100, 'Name too long'),
-  bio: z.string().max(1000, 'Bio too long').optional(),
-  nationality: z.string().max(50, 'Nationality too long').optional(),
-  birthYear: z.number().int().min(1800).max(new Date().getFullYear()).optional(),
-  deathYear: z.number().int().min(1800).max(new Date().getFullYear()).optional(),
-  location: z.string().max(100, 'Location too long').optional(),
-  education: z.string().max(500, 'Education too long').optional(),
-  website: z.string().url('Invalid website URL').optional(),
-  instagram: z.string().max(50, 'Instagram handle too long').optional(),
-  avatarUrl: z.string().url('Invalid avatar URL').optional()
-})
-
-export const userSchema = z.object({
-  email: z.string().email('Invalid email address'),
-  name: z.string().min(1, 'Name is required').max(100, 'Name too long'),
-  role: z.enum(['COLLECTOR', 'ARTIST', 'GALLERY', 'ADMIN']),
-  bio: z.string().max(1000, 'Bio too long').optional(),
-  location: z.string().max(100, 'Location too long').optional(),
-  website: z.string().url('Invalid website URL').optional()
-})
-
-// Rate limiting
-class RateLimiter {
-  private requests: Map<string, { count: number; resetTime: number }> = new Map()
-  private readonly windowMs: number
-  private readonly maxRequests: number
-
-  constructor(windowMs: number = 60000, maxRequests: number = 100) {
-    this.windowMs = windowMs
-    this.maxRequests = maxRequests
-  }
-
-  isAllowed(identifier: string): boolean {
-    const now = Date.now()
-    const record = this.requests.get(identifier)
-
-    if (!record || now > record.resetTime) {
-      this.requests.set(identifier, {
-        count: 1,
-        resetTime: now + this.windowMs
-      })
-      return true
-    }
-
-    if (record.count >= this.maxRequests) {
-      return false
-    }
-
-    record.count++
-    return true
-  }
-
-  getRemainingRequests(identifier: string): number {
-    const record = this.requests.get(identifier)
-    if (!record) return this.maxRequests
-    return Math.max(0, this.maxRequests - record.count)
-  }
-
-  getResetTime(identifier: string): number {
-    const record = this.requests.get(identifier)
-    return record?.resetTime || Date.now() + this.windowMs
-  }
+// Input validation patterns
+export const VALIDATION_PATTERNS = {
+  email: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
+  phone: /^[\+]?[1-9][\d]{0,15}$/,
+  url: /^https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)$/,
+  slug: /^[a-z0-9]+(?:-[a-z0-9]+)*$/,
+  uuid: /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i,
+  price: /^\d+(\.\d{1,2})?$/,
+  dimensions: /^\d+(\.\d+)?\s*x\s*\d+(\.\d+)?(?:\s*x\s*\d+(\.\d+)?)?$/i
 }
 
-export const rateLimiter = new RateLimiter(60000, 100) // 100 requests per minute
-export const strictRateLimiter = new RateLimiter(60000, 10) // 10 requests per minute for sensitive operations
-
-// Input sanitization
+// Sanitization functions
 export function sanitizeInput(input: string): string {
+  if (typeof input !== 'string') return ''
+  
   return input
     .trim()
     .replace(/[<>]/g, '') // Remove potential HTML tags
     .replace(/javascript:/gi, '') // Remove javascript: protocol
-    .replace(/on\w+=/gi, '') // Remove event handlers
-    .slice(0, 1000) // Limit length
+    .replace(/on\w+\s*=/gi, '') // Remove event handlers
+    .substring(0, 1000) // Limit length
 }
 
 export function sanitizeHtml(html: string): string {
-  // Basic HTML sanitization - in production, use a proper library like DOMPurify
+  if (typeof html !== 'string') return ''
+  
+  // Basic HTML sanitization - in production, use a library like DOMPurify
   return html
     .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
     .replace(/<iframe\b[^<]*(?:(?!<\/iframe>)<[^<]*)*<\/iframe>/gi, '')
     .replace(/on\w+\s*=\s*["'][^"']*["']/gi, '')
 }
 
+// Validation functions
+export function validateEmail(email: string): boolean {
+  return VALIDATION_PATTERNS.email.test(email)
+}
+
+export function validatePhone(phone: string): boolean {
+  return VALIDATION_PATTERNS.phone.test(phone.replace(/\s/g, ''))
+}
+
+export function validateUrl(url: string): boolean {
+  return VALIDATION_PATTERNS.url.test(url)
+}
+
+export function validateSlug(slug: string): boolean {
+  return VALIDATION_PATTERNS.slug.test(slug) && slug.length >= 3 && slug.length <= 50
+}
+
+export function validateUuid(uuid: string): boolean {
+  return VALIDATION_PATTERNS.uuid.test(uuid)
+}
+
+export function validatePrice(price: string | number): boolean {
+  const priceStr = typeof price === 'number' ? price.toString() : price
+  return VALIDATION_PATTERNS.price.test(priceStr) && parseFloat(priceStr) >= 0
+}
+
+export function validateDimensions(dimensions: string): boolean {
+  return VALIDATION_PATTERNS.dimensions.test(dimensions)
+}
+
+// Rate limiting
+const rateLimitMap = new Map<string, { count: number; resetTime: number }>()
+
+export function checkRateLimit(
+  identifier: string, 
+  maxRequests: number = 100, 
+  windowMs: number = 15 * 60 * 1000 // 15 minutes
+): boolean {
+  const now = Date.now()
+  const key = identifier
+  const record = rateLimitMap.get(key)
+
+  if (!record || now > record.resetTime) {
+    rateLimitMap.set(key, { count: 1, resetTime: now + windowMs })
+    return true
+  }
+
+  if (record.count >= maxRequests) {
+    return false
+  }
+
+  record.count++
+  return true
+}
+
 // CSRF protection
 export function generateCSRFToken(): string {
-  return Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15)
+  const array = new Uint8Array(32)
+  crypto.getRandomValues(array)
+  return Array.from(array, byte => byte.toString(16).padStart(2, '0')).join('')
 }
 
-export function validateCSRFToken(token: string, sessionToken: string): boolean {
-  return token === sessionToken && token.length > 0
-}
-
-// File upload validation
-export const allowedImageTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif']
-export const maxFileSize = 10 * 1024 * 1024 // 10MB
-
-export function validateImageFile(file: File): { valid: boolean; error?: string } {
-  if (!allowedImageTypes.includes(file.type)) {
-    return { valid: false, error: 'Invalid file type. Only JPEG, PNG, WebP, and GIF are allowed.' }
-  }
-
-  if (file.size > maxFileSize) {
-    return { valid: false, error: 'File too large. Maximum size is 10MB.' }
-  }
-
-  return { valid: true }
+export function validateCSRFToken(token: string, storedToken: string): boolean {
+  return token === storedToken && token.length === 64
 }
 
 // SQL injection prevention
@@ -141,150 +115,282 @@ export function escapeHtml(unsafe: string): string {
     .replace(/'/g, '&#039;')
 }
 
-// Password validation
-export function validatePassword(password: string): { valid: boolean; errors: string[] } {
+// File upload security
+export const ALLOWED_FILE_TYPES = {
+  image: ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml'],
+  document: ['application/pdf', 'text/plain', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document']
+}
+
+export const MAX_FILE_SIZES = {
+  image: 10 * 1024 * 1024, // 10MB
+  document: 50 * 1024 * 1024, // 50MB
+  avatar: 2 * 1024 * 1024 // 2MB
+}
+
+export function validateFileUpload(
+  file: File, 
+  allowedTypes: string[], 
+  maxSize: number
+): { valid: boolean; error?: string } {
+  if (!file) {
+    return { valid: false, error: 'No file provided' }
+  }
+
+  if (!allowedTypes.includes(file.type)) {
+    return { valid: false, error: 'Invalid file type' }
+  }
+
+  if (file.size > maxSize) {
+    return { valid: false, error: 'File too large' }
+  }
+
+  // Check for malicious file extensions
+  const maliciousExtensions = ['.exe', '.bat', '.cmd', '.scr', '.pif', '.vbs', '.js', '.jar']
+  const fileName = file.name.toLowerCase()
+  const hasMaliciousExtension = maliciousExtensions.some(ext => fileName.endsWith(ext))
+  
+  if (hasMaliciousExtension) {
+    return { valid: false, error: 'File type not allowed' }
+  }
+
+  return { valid: true }
+}
+
+// Authentication security
+export async function validateUserSession(userId: string): Promise<boolean> {
+  try {
+    const { data: user, error } = await supabase
+      .from('profiles')
+      .select('id, status')
+      .eq('id', userId)
+      .single()
+
+    if (error || !user) return false
+    if (user.status !== 'active') return false
+
+    return true
+  } catch (error) {
+    console.error('Error validating user session:', error)
+    return false
+  }
+}
+
+export async function checkUserPermissions(
+  userId: string, 
+  resource: string, 
+  action: string
+): Promise<boolean> {
+  try {
+    // Basic permission check - in production, implement proper RBAC
+    const { data: user, error } = await supabase
+      .from('profiles')
+      .select('role, status')
+      .eq('id', userId)
+      .single()
+
+    if (error || !user) return false
+    if (user.status !== 'active') return false
+
+    // Admin can do everything
+    if (user.role === 'ADMIN') return true
+
+    // Artist permissions
+    if (user.role === 'ARTIST') {
+      const artistActions = ['create_artwork', 'edit_artwork', 'delete_artwork', 'create_catalogue']
+      return artistActions.includes(action)
+    }
+
+    // Collector permissions
+    if (user.role === 'COLLECTOR') {
+      const collectorActions = ['view_artwork', 'favorite_artwork', 'create_inquiry']
+      return collectorActions.includes(action)
+    }
+
+    return false
+  } catch (error) {
+    console.error('Error checking user permissions:', error)
+    return false
+  }
+}
+
+// Data encryption/decryption (basic implementation)
+export function encryptData(data: string, key: string): string {
+  // In production, use a proper encryption library like crypto-js
+  const encoded = btoa(data + ':' + key)
+  return encoded
+}
+
+export function decryptData(encryptedData: string, key: string): string | null {
+  try {
+    const decoded = atob(encryptedData)
+    const [data, dataKey] = decoded.split(':')
+    return dataKey === key ? data : null
+  } catch (error) {
+    return null
+  }
+}
+
+// Audit logging
+export async function logSecurityEvent(
+  userId: string | null,
+  event: string,
+  details: any,
+  severity: 'low' | 'medium' | 'high' | 'critical' = 'low'
+): Promise<void> {
+  try {
+    await supabase
+      .from('security_logs')
+      .insert({
+        user_id: userId,
+        event,
+        details,
+        severity,
+        ip_address: await getClientIP(),
+        user_agent: navigator.userAgent,
+        timestamp: new Date().toISOString()
+      })
+  } catch (error) {
+    console.error('Error logging security event:', error)
+  }
+}
+
+// Get client IP (basic implementation)
+async function getClientIP(): Promise<string> {
+  try {
+    const response = await fetch('https://api.ipify.org?format=json')
+    const data = await response.json()
+    return data.ip || 'unknown'
+  } catch (error) {
+    return 'unknown'
+  }
+}
+
+// Content Security Policy
+export const CSP_HEADERS = {
+  'Content-Security-Policy': [
+    "default-src 'self'",
+    "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net",
+    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+    "font-src 'self' https://fonts.gstatic.com",
+    "img-src 'self' data: https: blob:",
+    "connect-src 'self' https://*.supabase.co https://api.ipify.org",
+    "frame-src 'none'",
+    "object-src 'none'",
+    "base-uri 'self'",
+    "form-action 'self'",
+    "frame-ancestors 'none'"
+  ].join('; ')
+}
+
+// Security headers
+export const SECURITY_HEADERS = {
+  ...CSP_HEADERS,
+  'X-Frame-Options': 'DENY',
+  'X-Content-Type-Options': 'nosniff',
+  'X-XSS-Protection': '1; mode=block',
+  'Referrer-Policy': 'strict-origin-when-cross-origin',
+  'Permissions-Policy': 'camera=(), microphone=(), geolocation=()'
+}
+
+// Input validation middleware
+export function validateInput(data: any, schema: Record<string, any>): {
+  valid: boolean
+  errors: string[]
+  sanitizedData: any
+} {
   const errors: string[] = []
+  const sanitizedData: any = {}
 
-  if (password.length < 8) {
-    errors.push('Password must be at least 8 characters long')
-  }
+  for (const [field, rules] of Object.entries(schema)) {
+    const value = data[field]
+    
+    // Required field check
+    if (rules.required && (!value || value.toString().trim() === '')) {
+      errors.push(`${field} is required`)
+      continue
+    }
 
-  if (!/[A-Z]/.test(password)) {
-    errors.push('Password must contain at least one uppercase letter')
-  }
+    // Skip validation if field is empty and not required
+    if (!value || value.toString().trim() === '') {
+      sanitizedData[field] = rules.default || null
+      continue
+    }
 
-  if (!/[a-z]/.test(password)) {
-    errors.push('Password must contain at least one lowercase letter')
-  }
+    // Sanitize input
+    const sanitized = sanitizeInput(value.toString())
+    sanitizedData[field] = sanitized
 
-  if (!/\d/.test(password)) {
-    errors.push('Password must contain at least one number')
-  }
+    // Type validation
+    if (rules.type === 'email' && !validateEmail(sanitized)) {
+      errors.push(`${field} must be a valid email address`)
+    } else if (rules.type === 'phone' && !validatePhone(sanitized)) {
+      errors.push(`${field} must be a valid phone number`)
+    } else if (rules.type === 'url' && !validateUrl(sanitized)) {
+      errors.push(`${field} must be a valid URL`)
+    } else if (rules.type === 'slug' && !validateSlug(sanitized)) {
+      errors.push(`${field} must be a valid slug (lowercase, numbers, hyphens only)`)
+    } else if (rules.type === 'price' && !validatePrice(sanitized)) {
+      errors.push(`${field} must be a valid price`)
+    } else if (rules.type === 'dimensions' && !validateDimensions(sanitized)) {
+      errors.push(`${field} must be valid dimensions (e.g., "24x36" or "24x36x2")`)
+    }
 
-  if (!/[!@#$%^&*(),.?":{}|<>]/.test(password)) {
-    errors.push('Password must contain at least one special character')
+    // Length validation
+    if (rules.minLength && sanitized.length < rules.minLength) {
+      errors.push(`${field} must be at least ${rules.minLength} characters`)
+    }
+    if (rules.maxLength && sanitized.length > rules.maxLength) {
+      errors.push(`${field} must be no more than ${rules.maxLength} characters`)
+    }
+
+    // Numeric validation
+    if (rules.type === 'number') {
+      const num = parseFloat(sanitized)
+      if (isNaN(num)) {
+        errors.push(`${field} must be a valid number`)
+      } else {
+        if (rules.min !== undefined && num < rules.min) {
+          errors.push(`${field} must be at least ${rules.min}`)
+        }
+        if (rules.max !== undefined && num > rules.max) {
+          errors.push(`${field} must be no more than ${rules.max}`)
+        }
+        sanitizedData[field] = num
+      }
+    }
   }
 
   return {
     valid: errors.length === 0,
-    errors
+    errors,
+    sanitizedData
   }
 }
 
-// JWT token validation
-export function validateJWTToken(token: string): { valid: boolean; payload?: any; error?: string } {
-  try {
-    const parts = token.split('.')
-    if (parts.length !== 3) {
-      return { valid: false, error: 'Invalid token format' }
-    }
-
-    const payload = JSON.parse(atob(parts[1]))
-    const now = Math.floor(Date.now() / 1000)
-
-    if (payload.exp && payload.exp < now) {
-      return { valid: false, error: 'Token expired' }
-    }
-
-    if (payload.iat && payload.iat > now) {
-      return { valid: false, error: 'Token issued in the future' }
-    }
-
-    return { valid: true, payload }
-  } catch (error) {
-    return { valid: false, error: 'Invalid token' }
-  }
-}
-
-// API key validation
-export function validateAPIKey(apiKey: string): boolean {
-  // In production, validate against database
-  const validKeys = process.env.VALID_API_KEYS?.split(',') || []
-  return validKeys.includes(apiKey)
-}
-
-// Request logging for security monitoring
-export function logSecurityEvent(event: string, details: any, severity: 'low' | 'medium' | 'high' = 'medium') {
-  const logEntry = {
-    timestamp: new Date().toISOString(),
-    event,
-    details,
-    severity,
-    ip: details.ip || 'unknown',
-    userAgent: details.userAgent || 'unknown'
-  }
-
-  // In production, send to security monitoring service
-  console.log(`[SECURITY ${severity.toUpperCase()}]`, logEntry)
-}
-
-// Content Security Policy
-export const cspDirectives = {
-  "default-src": ["'self'"],
-  "script-src": ["'self'", "'unsafe-inline'", "https://cdn.jsdelivr.net"],
-  "style-src": ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
-  "img-src": ["'self'", "data:", "https:", "blob:"],
-  "font-src": ["'self'", "https://fonts.gstatic.com"],
-  "connect-src": ["'self'", "https://api.supabase.co"],
-  "object-src": ["'none'"],
-  "base-uri": ["'self'"],
-  "form-action": ["'self'"],
-  "frame-ancestors": ["'none'"]
-}
-
-export function getCSPHeader(): string {
-  return Object.entries(cspDirectives)
-    .map(([directive, sources]) => `${directive} ${sources.join(' ')}`)
-    .join('; ')
-}
-
-// Error handling with security considerations
-export class SecurityError extends Error {
-  constructor(message: string, public code: string, public statusCode: number = 400) {
-    super(message)
-    this.name = 'SecurityError'
-  }
-}
-
-export function handleSecurityError(error: any, context: string): never {
-  logSecurityEvent('security_error', {
-    error: error.message,
-    context,
-    stack: error.stack
-  }, 'high')
-
-  throw new SecurityError(
-    'A security error occurred. Please try again.',
-    'SECURITY_ERROR',
-    500
-  )
-}
-
-// Data validation wrapper
-export function validateData<T>(schema: z.ZodSchema<T>, data: unknown): T {
-  try {
-    return schema.parse(data)
-  } catch (error) {
-    if (error instanceof z.ZodError) {
-      const message = error.errors.map(e => `${e.path.join('.')}: ${e.message}`).join(', ')
-      throw new SecurityError(`Validation failed: ${message}`, 'VALIDATION_ERROR', 400)
-    }
-    throw error
-  }
-}
-
-// Request validation middleware
-export function createValidationMiddleware<T>(schema: z.ZodSchema<T>) {
-  return (req: any, res: any, next: any) => {
-    try {
-      req.validatedData = validateData(schema, req.body)
-      next()
-    } catch (error) {
-      if (error instanceof SecurityError) {
-        res.status(error.statusCode).json({ error: error.message })
-      } else {
-        res.status(500).json({ error: 'Internal server error' })
-      }
-    }
+// Common validation schemas
+export const VALIDATION_SCHEMAS = {
+  artwork: {
+    title: { type: 'string', required: true, minLength: 1, maxLength: 200 },
+    description: { type: 'string', required: false, maxLength: 2000 },
+    price: { type: 'price', required: false, min: 0 },
+    medium: { type: 'string', required: false, maxLength: 100 },
+    dimensions: { type: 'dimensions', required: false },
+    genre: { type: 'string', required: false, maxLength: 50 },
+    year: { type: 'number', required: false, min: 1000, max: new Date().getFullYear() + 1 }
+  },
+  artist: {
+    full_name: { type: 'string', required: true, minLength: 1, maxLength: 100 },
+    bio: { type: 'string', required: false, maxLength: 2000 },
+    location: { type: 'string', required: false, maxLength: 100 },
+    website: { type: 'url', required: false },
+    instagram: { type: 'string', required: false, maxLength: 50 },
+    twitter: { type: 'string', required: false, maxLength: 50 }
+  },
+  contact: {
+    full_name: { type: 'string', required: true, minLength: 1, maxLength: 100 },
+    email: { type: 'email', required: true },
+    organization: { type: 'string', required: false, maxLength: 100 },
+    phone_number: { type: 'phone', required: false },
+    notes: { type: 'string', required: false, maxLength: 1000 }
   }
 }

@@ -74,8 +74,8 @@ const SettingsPage: React.FC = () => {
       // Load profile data
       const { data: profileData } = await supabase
         .from('profiles')
-        .select('display_name, bio, location, website, role')
-        .eq('user_id', user?.id)
+        .select('display_name, full_name, bio, location, website, role')
+        .eq('id', user?.id)
         .single()
 
       if (profileData) {
@@ -90,7 +90,7 @@ const SettingsPage: React.FC = () => {
       const { data: userPrefs } = await supabase
         .from('user_preferences')
         .select('*')
-        .eq('user_id', user?.id)
+        .eq('id', user?.id)
         .single()
 
       if (userPrefs) {
@@ -126,7 +126,7 @@ const SettingsPage: React.FC = () => {
           website: website,
           updated_at: new Date().toISOString()
         })
-        .eq('user_id', user?.id)
+        .eq('id', user?.id)
 
       if (error) throw error
       showSuccessToast('Profile updated successfully')
@@ -175,7 +175,7 @@ const SettingsPage: React.FC = () => {
           role: newRole,
           updated_at: new Date().toISOString()
         })
-        .eq('user_id', user?.id)
+        .eq('id', user?.id)
 
       if (error) throw error
       

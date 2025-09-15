@@ -26,8 +26,7 @@ export function addResourceHints() {
 
   // Preload critical resources
   const criticalResources = [
-    '/src/brush/theme.css',
-    '/src/styles/dashboard.css'
+    '/src/brush/theme.css'
   ]
 
   criticalResources.forEach(resource => {

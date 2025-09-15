@@ -194,7 +194,7 @@ class IntelligentSearchEngine {
       let supabaseQuery = supabase
         .from('artworks')
         .select(`
-          id, title, description, price, genre, medium, style, subject, dominant_colors,
+          id, title, description, price, genre, medium, subject, dominant_colors,
           primary_image_url, created_at, user_id, status,
           profiles!artworks_user_id_fkey(id, display_name, full_name, slug, avatar_url, bio)
         `)
@@ -315,14 +315,14 @@ class IntelligentSearchEngine {
       let supabaseQuery = supabase
         .from('profiles')
         .select(`
-          id, name, bio, avatar_url, created_at,
+          id, display_name, full_name, bio, avatar_url, created_at,
           artworks!artworks_user_id_fkey(id, title, primary_image_url, price, status)
         `)
         .eq('role', 'artist')
 
       // Apply text search
       if (nlQuery.query) {
-        supabaseQuery = supabaseQuery.or(`name.ilike.%${nlQuery.query}%,bio.ilike.%${nlQuery.query}%`)
+        supabaseQuery = supabaseQuery.or(`display_name.ilike.%${nlQuery.query}%,full_name.ilike.%${nlQuery.query}%,bio.ilike.%${nlQuery.query}%`)
       }
 
       const { data: artists, error } = await supabaseQuery.limit(limit * 2)
@@ -383,8 +383,8 @@ class IntelligentSearchEngine {
         .from('catalogues')
         .select(`
           id, name, description, cover_image_url, is_public, created_at, user_id,
-          profiles!catalogues_user_id_fkey(id, name, avatar_url),
-          artworks!catalogue_artworks(artwork_id, artworks(id, title, primary_image_url, status))
+          profiles!catalogues_user_id_fkey(id, full_name, avatar_url),
+          artworks(id, title, primary_image_url, status)
         `)
         .eq('is_public', true)
 
@@ -411,7 +411,8 @@ class IntelligentSearchEngine {
         }
         
         // Artist name matching
-        if (catalogue.profiles?.name?.toLowerCase().includes(nlQuery.query.toLowerCase())) {
+        if (catalogue.profiles?.display_name?.toLowerCase().includes(nlQuery.query.toLowerCase()) || 
+            catalogue.profiles?.full_name?.toLowerCase().includes(nlQuery.query.toLowerCase())) {
           relevanceScore += 40
         }
 
@@ -554,7 +555,7 @@ class IntelligentSearchEngine {
       // Get popular search terms and artist names
       const { data: artworks } = await supabase
         .from('artworks')
-        .select('title, genre, medium, profiles(name)')
+        .select('title, genre, medium, profiles(display_name, full_name)')
         .ilike('title', `%${query}%`)
         .eq('status', 'available')
         .limit(10)
