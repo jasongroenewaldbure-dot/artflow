@@ -393,7 +393,7 @@ class AutoCurationService {
         .single();
 
       if (optimization?.best_times) {
-        const today = new Date().toLocaleDateString('en-US', { weekday: 'lowercase' });
+        const today = new Date().toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase();
         const bestTimes = optimization.best_times[today] || [];
         return bestTimes[0] || '09:00';
       }

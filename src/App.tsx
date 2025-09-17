@@ -3,47 +3,46 @@ import { Helmet } from 'react-helmet-async'
 import { Route, Routes, useLocation, Navigate } from 'react-router-dom'
 import { BrushProvider } from './brush/BrushProvider'
 import { AuthProvider } from './contexts/AuthProvider'
-import { NavigationProvider } from './components/navigation/NavigationProvider'
-import ProtectedRoute from './components/ProtectedRoute'
+import NavigationProvider from './components/navigation/NavigationProvider'
+import ProtectedRoute from './components/auth/ProtectedRoute'
 import DashboardLayout from './components/layout/DashboardLayout'
+import ErrorBoundary from './components/common/ErrorBoundary'
 import { addResourceHints, measureWebVitals } from '@/services/performance'
-import './styles/dashboard.css'
 import './brush/theme.css'
 
 // Lazy load pages for better performance
-const HomePage = lazy(() => import('./routes/marketplace/HomePage'))
-const SearchResultsPage = lazy(() => import('./routes/marketplace/SearchResultsPage'))
-const ArtistPage = lazy(() => import('./routes/Artist'))
-const ArtistsPage = lazy(() => import('./routes/Artists'))
-const ArtworkPage = lazy(() => import('./routes/Artwork'))
-// const SearchPage = lazy(() => import('./routes/Search'))
-// const ComparePage = lazy(() => import('./routes/marketplace/ComparePage'))
-const DashboardPage = lazy(() => import('./routes/Dashboard'))
-const WaitlistPage = lazy(() => import('./routes/WaitlistPage'))
-const StartPage = lazy(() => import('./routes/auth/StartPage'))
-const MyArtworksPage = lazy(() => import('./routes/MyArtworks'))
-const AuthCallbackPage = lazy(() => import('./routes/AuthCallback'))
-const OnboardingPage = lazy(() => import('./routes/Onboarding'))
-const ArtistSalesPage = lazy(() => import('./routes/Sales'))
-const ArtistSettingsPage = lazy(() => import('./routes/ArtistSettings'))
-const CollectorQuizPage = lazy(() => import('./routes/CollectorQuiz'))
-const CataloguePage = lazy(() => import('./routes/marketplace/CataloguePage'))
-const FavoritesPage = lazy(() => import('./routes/user/FavoritesPage'))
-const CollectionPage = lazy(() => import('./routes/user/CollectionPage'))
-const SocialFeaturesPage = lazy(() => import('./routes/social/SocialFeaturesPage'))
-const NotificationsPage = lazy(() => import('./routes/user/NotificationsPage'))
-const ArtworksPage = lazy(() => import('./routes/marketplace/ArtworksPage'))
-const ArtworkComparisonPage = lazy(() => import('./routes/collector/ArtworkComparison'))
-const CollectorVaultPage = lazy(() => import('./routes/collector/CollectorVault'))
-const StudioManagementPage = lazy(() => import('./routes/artist/StudioManagement'))
-const ExplorePage = lazy(() => import('./routes/collector/ExplorePage'))
-const DiscoverPage = lazy(() => import('./components/marketplace/DiscoverPage'))
-const CollectorFavoritesPage = lazy(() => import('./routes/collector/FavoritesPage'))
-const MessagesPage = lazy(() => import('./routes/collector/MessagesPage'))
-const CollectorSalesPage = lazy(() => import('./routes/Sales'))
-const SettingsPage = lazy(() => import('./routes/collector/SettingsPage'))
-const CollectionRoadmapPage = lazy(() => import('./routes/collector/CollectionRoadmapPage'))
-const NotFoundPage = lazy(() => import('./routes/NotFoundPage'))
+const HomePage = lazy(() => import('./pages/marketplace/HomePage'))
+const SearchResultsPage = lazy(() => import('./pages/marketplace/SearchResultsPage'))
+const BrowseArtistsPage = lazy(() => import('./pages/marketplace/BrowseArtistsPage'))
+const BrowseArtworksPage = lazy(() => import('./pages/marketplace/BrowseArtworksPage'))
+const ArtworkDetailPage = lazy(() => import('./pages/ArtworkDetail'))
+const DashboardPage = lazy(() => import('./pages/Dashboard'))
+const WaitlistPage = lazy(() => import('./pages/WaitlistPage'))
+const StartPage = lazy(() => import('./pages/auth/StartPage'))
+const AuthCallbackPage = lazy(() => import('./pages/AuthCallback'))
+const ArtworkCreatePage = lazy(() => import('./pages/ArtworkCreate'))
+const OnboardingPage = lazy(() => import('./pages/Onboarding'))
+const SalesPage = lazy(() => import('./pages/Sales'))
+const ArtistSalesPage = lazy(() => import('./pages/Sales'))
+const ArtistSettingsPage = lazy(() => import('./pages/profile/ArtistSettings'))
+const CollectorQuizPage = lazy(() => import('./pages/profile/CollectorQuiz'))
+const CataloguePage = lazy(() => import('./pages/marketplace/CataloguePage'))
+const BrowseCataloguesPage = lazy(() => import('./pages/marketplace/BrowseCataloguesPage'))
+const FavoritesPage = lazy(() => import('./pages/profile/FavoritesPage'))
+const CollectionPage = lazy(() => import('./pages/profile/CollectionPage'))
+const SocialFeaturesPage = lazy(() => import('./pages/profile/SocialFeaturesPage'))
+const NotificationsPage = lazy(() => import('./pages/profile/NotificationsPage'))
+const ArtworkComparisonPage = lazy(() => import('./pages/profile/ArtworkComparison'))
+const CollectorVaultPage = lazy(() => import('./pages/profile/CollectorVault'))
+const StudioManagementPage = lazy(() => import('./pages/profile/StudioManagement'))
+// ExplorePage removed - replaced by IntelligentExplorePage
+const MessagesPage = lazy(() => import('./pages/profile/MessagesPage'))
+const SettingsPage = lazy(() => import('./pages/profile/SettingsPage'))
+const IntelligentExplorePage = lazy(() => import('./pages/marketplace/IntelligentExplorePage'))
+const CollectionRoadmapPage = lazy(() => import('./pages/profile/CollectionRoadmapPage'))
+const ArtistProfilePage = lazy(() => import('./pages/profile/ArtistProfile'))
+const ErrorPage = lazy(() => import('./pages/ErrorPage'))
+// Test pages removed
 
 export default function App() {
   const location = useLocation()
@@ -62,19 +61,21 @@ export default function App() {
   }, [])
 
   return (
-    <AuthProvider>
-      <BrushProvider>
-      <Helmet>
-          <title>ArtFlow - Discover, Buy, and Sell Art</title>
-          <meta name="description" content="Discover and collect art from artists around the world. A modern art marketplace platform." />
-          <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <link rel="canonical" href="/" />
-          <link rel="preconnect" href="https://api.supabase.co" />
-          <link rel="preconnect" href="https://fonts.googleapis.com" />
-          <link rel="preconnect" href="https://fonts.gstatic.com" />
-      </Helmet>
-        
-        <Suspense fallback={
+    <ErrorBoundary>
+      <AuthProvider>
+        <BrushProvider>
+        <Helmet>
+            <title>ArtFlow - Browse, Buy, and Sell Art</title>
+            <meta name="description" content="Browse and collect art from artists around the world. A modern art marketplace platform." />
+            <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+          <link rel="canonical" href="/" />
+            <link rel="preconnect" href="https://api.supabase.co" />
+            <link rel="preconnect" href="https://fonts.googleapis.com" />
+            <link rel="preconnect" href="https://fonts.gstatic.com" />
+            <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@100;200;300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
+        </Helmet>
+          
+          <Suspense fallback={
           <div style={{
             display: 'flex',
             justifyContent: 'center',
@@ -105,20 +106,16 @@ export default function App() {
             <Route path="/auth" element={<Navigate to="/start" replace />} />
             <Route path="/auth/callback" element={<AuthCallbackPage />} />
             
+            
             {/* All other routes with Navigation */}
             <Route path="/home" element={
               <NavigationProvider>
                 <HomePage />
               </NavigationProvider>
             } />
-            <Route path="/discover" element={
-              <NavigationProvider>
-                <DiscoverPage />
-              </NavigationProvider>
-            } />
             <Route path="/artworks" element={
               <NavigationProvider>
-                <ArtworksPage />
+                <BrowseArtworksPage />
               </NavigationProvider>
             } />
             <Route path="/search" element={
@@ -130,31 +127,36 @@ export default function App() {
             {/* Artist Routes */}
             <Route path="/artist/:slug" element={
               <NavigationProvider>
-                <ArtistPage />
+                <ArtistProfilePage />
               </NavigationProvider>
             } />
             <Route path="/artists" element={
               <NavigationProvider>
-                <ArtistsPage />
+                <BrowseArtistsPage />
               </NavigationProvider>
             } />
             
             {/* Artwork Routes - Friendly URLs */}
             <Route path="/artist/:artistSlug/:artworkSlug" element={
               <NavigationProvider>
-                <ArtworkPage />
+                <ArtworkDetailPage />
               </NavigationProvider>
             } />
             <Route path="/artwork/:id" element={
               <NavigationProvider>
-                <ArtworkPage />
+                <ArtworkDetailPage />
               </NavigationProvider>
             } />
             
             {/* Catalogue Routes - Friendly URLs */}
             <Route path="/catalogues" element={
               <NavigationProvider>
-                <CataloguePage />
+                <BrowseCataloguesPage />
+              </NavigationProvider>
+            } />
+            <Route path="/browse/catalogues" element={
+              <NavigationProvider>
+                <BrowseCataloguesPage />
               </NavigationProvider>
             } />
             <Route path="/artist/:artistSlug/catalogue/:catalogueSlug" element={
@@ -166,6 +168,20 @@ export default function App() {
               <NavigationProvider>
                 <CataloguePage />
               </NavigationProvider>
+            } />
+            
+            {/* Intelligent Explore - Public and Collector */}
+            <Route path="/discover" element={
+              <NavigationProvider>
+                <IntelligentExplorePage />
+              </NavigationProvider>
+            } />
+            <Route path="/marketplace/explore" element={
+              <ProtectedRoute>
+                <NavigationProvider>
+                  <IntelligentExplorePage />
+                </NavigationProvider>
+              </ProtectedRoute>
             } />
             
             {/* Social Features */}
@@ -181,14 +197,14 @@ export default function App() {
             <Route path="/explore" element={
               <ProtectedRoute>
                 <NavigationProvider>
-                  <ExplorePage />
+                  <IntelligentExplorePage />
                 </NavigationProvider>
               </ProtectedRoute>
             } />
             <Route path="/favorites" element={
               <ProtectedRoute>
                 <NavigationProvider>
-                  <CollectorFavoritesPage />
+                  <FavoritesPage />
                 </NavigationProvider>
               </ProtectedRoute>
             } />
@@ -202,7 +218,7 @@ export default function App() {
             <Route path="/sales" element={
               <ProtectedRoute>
                 <NavigationProvider>
-                  <CollectorSalesPage />
+                  <SalesPage />
                 </NavigationProvider>
               </ProtectedRoute>
             } />
@@ -255,96 +271,99 @@ export default function App() {
             <Route path="/dashboard" element={<Navigate to="/u/dashboard" replace />} />
             <Route path="/u/dashboard" element={
               <ProtectedRoute>
-                <DashboardLayout />
+                <DashboardLayout>
+                  <DashboardPage />
+                </DashboardLayout>
               </ProtectedRoute>
-            }>
-              <Route index element={<DashboardPage />} />
-            </Route>
+            } />
             <Route path="/artwork/new" element={
               <ProtectedRoute>
                 <NavigationProvider>
-                  <MyArtworksPage />
+                  <ArtworkCreatePage />
                 </NavigationProvider>
               </ProtectedRoute>
             } />
             <Route path="/u/sales" element={
               <ProtectedRoute>
-                <DashboardLayout />
+                <DashboardLayout>
+                  <ArtistSalesPage />
+                </DashboardLayout>
               </ProtectedRoute>
-            }>
-              <Route index element={<ArtistSalesPage />} />
-            </Route>
+            } />
             <Route path="/u/settings/artist" element={
               <ProtectedRoute>
-                <DashboardLayout />
+                <DashboardLayout>
+                  <ArtistSettingsPage />
+                </DashboardLayout>
               </ProtectedRoute>
-            }>
-              <Route index element={<ArtistSettingsPage />} />
-            </Route>
+            } />
             <Route path="/u/collector/quiz" element={
               <ProtectedRoute>
-                <DashboardLayout />
+                <DashboardLayout>
+                  <CollectorQuizPage />
+                </DashboardLayout>
               </ProtectedRoute>
-            }>
-              <Route index element={<CollectorQuizPage />} />
-            </Route>
+            } />
             
             {/* User Pages */}
             <Route path="/u/favorites" element={
               <ProtectedRoute>
-                <DashboardLayout />
+                <DashboardLayout>
+                  <FavoritesPage />
+                </DashboardLayout>
               </ProtectedRoute>
-            }>
-              <Route index element={<FavoritesPage />} />
-            </Route>
+            } />
             <Route path="/u/collection" element={
               <ProtectedRoute>
-                <DashboardLayout />
+                <DashboardLayout>
+                  <CollectionPage />
+                </DashboardLayout>
               </ProtectedRoute>
-            }>
-              <Route index element={<CollectionPage />} />
-            </Route>
+            } />
             <Route path="/u/notifications" element={
               <ProtectedRoute>
-                <DashboardLayout />
+                <DashboardLayout>
+                  <NotificationsPage />
+                </DashboardLayout>
               </ProtectedRoute>
-            }>
-              <Route index element={<NotificationsPage />} />
-            </Route>
+            } />
             <Route path="/u/settings" element={
               <ProtectedRoute>
-                <DashboardLayout />
+                <DashboardLayout>
+                  <div>Settings Page - Coming Soon</div>
+                </DashboardLayout>
               </ProtectedRoute>
-            }>
-              <Route index element={<div>Settings Page - Coming Soon</div>} />
-            </Route>
+            } />
             <Route path="/u/artworks" element={
               <ProtectedRoute>
-                <DashboardLayout />
+                <DashboardLayout>
+                  <div>My Artworks Page - Coming Soon</div>
+                </DashboardLayout>
               </ProtectedRoute>
-            }>
-              <Route index element={<div>My Artworks Page - Coming Soon</div>} />
-            </Route>
+            } />
             <Route path="/u/messages" element={
               <ProtectedRoute>
-                <DashboardLayout />
+                <DashboardLayout>
+                  <div>Messages Page - Coming Soon</div>
+                </DashboardLayout>
               </ProtectedRoute>
-            }>
-              <Route index element={<div>Messages Page - Coming Soon</div>} />
-            </Route>
+            } />
             <Route path="/u/help" element={
               <ProtectedRoute>
-                <DashboardLayout />
+                <DashboardLayout>
+                  <div>Help Page - Coming Soon</div>
+                </DashboardLayout>
               </ProtectedRoute>
-            }>
-              <Route index element={<div>Help Page - Coming Soon</div>} />
-            </Route>
+            } />
+            
+            {/* Test routes removed - using production-ready components */}
             
             {/* 404 Catch-all Route */}
-            <Route path="*" element={<NotFoundPage />} />
+            <Route path="*" element={<ErrorPage statusCode={404} />} />
           </Routes>
         </Suspense>
-      </BrushProvider>
-    </AuthProvider>
+        </BrushProvider>
+      </AuthProvider>
+    </ErrorBoundary>
   )
 }

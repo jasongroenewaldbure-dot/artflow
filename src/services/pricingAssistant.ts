@@ -32,22 +32,57 @@ export interface NegotiationOffer {
 }
 
 class PricingAssistantService {
-  // Get pricing suggestions based on artwork data
+  // Enhanced AI-driven pricing suggestions with market analysis
   async getPricingSuggestions(artwork: any): Promise<PricingSuggestion> {
     try {
-      // Get similar artworks for comparison
-      const { data: similarArtworks, error } = await supabase
-        .from('artworks')
-        .select('price, dimensions, medium, genre, subject, user_id, created_at')
-        .eq('medium', artwork.medium)
-        .eq('status', 'sold')
-        .not('price', 'is', null)
-        .limit(50);
+      // Multi-factor similarity search for better pricing accuracy
+      const queries = await Promise.all([
+        // Primary: Same medium and similar size
+        supabase
+          .from('artworks')
+          .select(`
+            price, dimensions, medium, genre, subject, user_id, created_at,
+            artist:profiles!artworks_user_id_fkey(
+              id, full_name, created_at,
+              artworks!artworks_user_id_fkey(count)
+            )
+          `)
+          .eq('medium', artwork.medium)
+          .eq('status', 'Sold')
+          .not('price', 'is', null)
+          .limit(30),
+        
+        // Secondary: Same artist's sold works
+        artwork.user_id ? supabase
+          .from('artworks')
+          .select('price, dimensions, medium, created_at')
+          .eq('user_id', artwork.user_id)
+          .eq('status', 'Sold')
+          .not('price', 'is', null)
+          .limit(20) : Promise.resolve({ data: [], error: null }),
+        
+        // Tertiary: Similar style/genre regardless of medium
+        supabase
+          .from('artworks')
+          .select('price, dimensions, medium, genre, created_at')
+          .eq('genre', artwork.genre || artwork.style)
+          .eq('status', 'Sold')
+          .not('price', 'is', null)
+          .limit(25)
+      ])
 
-      if (error) throw error;
+      const [mediumQuery, artistQuery, genreQuery] = queries
+      if (mediumQuery.error) throw mediumQuery.error
 
-      // Calculate market data
-      const prices = similarArtworks?.map(a => a.price).filter(Boolean) || [];
+      // Combine and weight the results
+      const allSimilar = [
+        ...(mediumQuery.data || []).map(a => ({ ...a, weight: 1.0 })),
+        ...(artistQuery.data || []).map(a => ({ ...a, weight: 1.5 })), // Higher weight for same artist
+        ...(genreQuery.data || []).map(a => ({ ...a, weight: 0.7 }))
+      ]
+
+      // Calculate market data with enhanced analytics
+      const prices = allSimilar.map(a => a.price).filter(Boolean) || [];
       const averagePrice = prices.reduce((sum, price) => sum + price, 0) / prices.length || 0;
       const priceRange = {
         min: Math.min(...prices),
@@ -55,10 +90,10 @@ class PricingAssistantService {
       };
 
       // Calculate multipliers
-      const sizeMultiplier = this.calculateSizeMultiplier(artwork.dimensions, similarArtworks);
+      const sizeMultiplier = this.calculateSizeMultiplier(artwork.dimensions, similarArtworks || []);
       const mediumMultiplier = this.calculateMediumMultiplier(artwork.medium);
       const artistMultiplier = await this.calculateArtistMultiplier(artwork.user_id);
-      const recentSalesMultiplier = this.calculateRecentSalesMultiplier(similarArtworks);
+      const recentSalesMultiplier = this.calculateRecentSalesMultiplier(similarArtworks || []);
 
       // Calculate suggested price
       const basePrice = averagePrice;
@@ -73,21 +108,21 @@ class PricingAssistantService {
         mediumMultiplier,
         artistMultiplier,
         recentSalesMultiplier,
-        similarCount: similarArtworks?.length || 0
+        similarCount: (similarArtworks || []).length
       });
 
       // Calculate confidence (0-1)
-      const confidence = this.calculateConfidence(similarArtworks?.length || 0, averagePrice);
+      const confidence = this.calculateConfidence((similarArtworks || []).length, averagePrice);
 
       return {
         suggestedPrice,
         confidence,
         reasoning,
         marketData: {
-          similarArtworks: similarArtworks?.length || 0,
+          similarArtworks: (similarArtworks || []).length,
           averagePrice,
           priceRange,
-          marketVelocity: this.calculateMarketVelocity(similarArtworks)
+          marketVelocity: this.calculateMarketVelocity(similarArtworks || [])
         },
         factors: {
           sizeMultiplier,

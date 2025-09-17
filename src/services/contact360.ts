@@ -53,8 +53,12 @@ class Contact360Service {
         .from('artwork_views')
         .select(`
           id, viewed_at, artwork_id,
-          artwork:artwork_id(title, primary_image_url, user_id),
-          artist:artwork_id.user_id(full_name)
+          artwork:artworks!artwork_views_artwork_id_fkey(
+            title, 
+            primary_image_url, 
+            user_id,
+            artist:profiles!artworks_user_id_fkey(full_name)
+          )
         `)
         .eq('viewer_id', contactId)
         .order('viewed_at', { ascending: false })
@@ -79,8 +83,8 @@ class Contact360Service {
         .from('artwork_reactions')
         .select(`
           id, created_at, artwork_id,
-          artwork:artwork_id(title, primary_image_url, user_id),
-          artist:artwork_id.user_id(full_name)
+          artwork:artworks!artwork_views_artwork_id_fkey(title, primary_image_url, user_id),
+          artist:profiles!artworks_user_id_fkey(full_name)
         `)
         .eq('collector_id', contactId)
         .eq('reaction_type', 'like')
@@ -106,8 +110,8 @@ class Contact360Service {
         .from('artwork_shares')
         .select(`
           id, created_at, artwork_id,
-          artwork:artwork_id(title, primary_image_url, user_id),
-          artist:artwork_id.user_id(full_name)
+          artwork:artworks!artwork_views_artwork_id_fkey(title, primary_image_url, user_id),
+          artist:profiles!artworks_user_id_fkey(full_name)
         `)
         .eq('collector_id', contactId)
         .order('created_at', { ascending: false })
@@ -132,8 +136,8 @@ class Contact360Service {
         .from('inquiries')
         .select(`
           id, created_at, artwork_id,
-          artwork:artwork_id(title, primary_image_url, user_id),
-          artist:artwork_id.user_id(full_name)
+          artwork:artworks!artwork_views_artwork_id_fkey(title, primary_image_url, user_id),
+          artist:profiles!artworks_user_id_fkey(full_name)
         `)
         .eq('inquirer_id', contactId)
         .order('created_at', { ascending: false })
@@ -158,8 +162,8 @@ class Contact360Service {
         .from('sales')
         .select(`
           id, sale_date, artwork_id, sale_price,
-          artwork:artwork_id(title, primary_image_url, user_id),
-          artist:artwork_id.user_id(full_name)
+          artwork:artworks!artwork_views_artwork_id_fkey(title, primary_image_url, user_id),
+          artist:profiles!artworks_user_id_fkey(full_name)
         `)
         .eq('collector_id', contactId)
         .order('sale_date', { ascending: false })

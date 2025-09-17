@@ -18,11 +18,12 @@ interface AuthContextType {
   user: User | null
   profile: Profile | null
   loading: boolean
-  signIn: (email: string, password: string) => Promise<void>
+  signIn: (email: string, password: string) => Promise<{ user: User | null }>
   signUp: (email: string, password: string) => Promise<void>
   signOut: () => Promise<void>
   signInWithMagicLink: (email: string) => Promise<void>
   resetPassword: (email: string) => Promise<void>
+  updateProfile: (data: any) => Promise<void>
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
@@ -138,11 +139,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const signIn = async (email: string, password: string) => {
     try {
-      const { error } = await supabase.auth.signInWithPassword({
+      const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       })
       if (error) throw error
+      return { user: data.user }
     } catch (error) {
       console.warn('Supabase signIn not available:', error)
       throw new Error('Authentication service not available. Please check your Supabase configuration.')
@@ -177,14 +179,33 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   }
 
   const signInWithMagicLink = async (email: string) => {
-    const { error } = await supabase.auth.signInWithOtp({
-      email,
-      options: {
-        emailRedirectTo: `${window.location.origin}/auth/callback`,
-        shouldCreateUser: true, // Allow new users to be created
-      },
-    })
-    if (error) throw error
+    try {
+      const { error } = await supabase.auth.signInWithOtp({
+        email,
+        options: {
+          emailRedirectTo: `${window.location.origin}/auth/callback`,
+          shouldCreateUser: true,
+        },
+      })
+      
+      if (error) {
+        // Handle specific error types gracefully
+        if (error.message.includes('Database error') || error.message.includes('Internal Server Error')) {
+          throw new Error('Our servers are experiencing issues. Please try again in a few minutes.')
+        } else if (error.message.includes('rate limit') || error.message.includes('too many')) {
+          throw new Error('Too many requests. Please wait a moment before trying again.')
+        } else if (error.message.includes('Invalid email')) {
+          throw new Error('Please enter a valid email address.')
+        } else {
+          throw new Error('Failed to send verification email. Please check your email address and try again.')
+        }
+      }
+    } catch (error: any) {
+      if (error.message.includes('Failed to fetch') || error.message.includes('Network')) {
+        throw new Error('Network connection issue. Please check your internet connection and try again.')
+      }
+      throw error
+    }
   }
 
   const resetPassword = async (email: string) => {
@@ -203,6 +224,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     signOut,
     signInWithMagicLink,
     resetPassword,
+    updateProfile: async (data: any) => {
+      // Placeholder implementation
+      console.log('Update profile:', data)
+    }
   }
 
   return (

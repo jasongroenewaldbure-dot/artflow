@@ -1736,7 +1736,7 @@ class MarketDataService {
         'brooklynrail.org',
         'artspiel.com',
         'artnet.com',
-        'artsy.net',
+        'artflow.net',
         'hyperallergic.com',
         'artnews.com',
         'artinamericamagazine.com',
@@ -2384,7 +2384,7 @@ class MarketDataService {
     try {
       const pressSources = [
         'site:artnet.com',
-        'site:artsy.net',
+        'site:artflow.net',
         'site:artforum.com',
         'site:artnews.com',
         'site:hyperallergic.com',
@@ -2772,7 +2772,7 @@ class MarketDataService {
       // Search art market publications
       const artMarketSources = [
         'site:artnet.com',
-        'site:artsy.net',
+        'site:artflow.net',
         'site:artforum.com',
         'site:artnews.com',
         'site:christies.com',

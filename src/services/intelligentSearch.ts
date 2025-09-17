@@ -262,7 +262,7 @@ class IntelligentSearchEngine {
         
         // Artist name matching
         if (nlQuery.entities.artists?.length) {
-          const artistName = artwork.profiles?.name?.toLowerCase() || ''
+          const artistName = artwork.profiles?.[0]?.full_name?.toLowerCase() || artwork.profiles?.full_name?.toLowerCase() || ''
           const artistMatches = nlQuery.entities.artists.filter(artist => 
             artistName.includes(artist.toLowerCase())
           )
@@ -333,7 +333,7 @@ class IntelligentSearchEngine {
         let relevanceScore = 0
         
         // Name matching
-        if (artist.name?.toLowerCase().includes(nlQuery.query.toLowerCase())) {
+        if (artist.full_name?.toLowerCase().includes(nlQuery.query.toLowerCase())) {
           relevanceScore += 50
         }
         
@@ -344,7 +344,7 @@ class IntelligentSearchEngine {
         
         // Artist name in entities
         if (nlQuery.entities.artists?.some(artistName => 
-          artist.name?.toLowerCase().includes(artistName.toLowerCase())
+          artist.full_name?.toLowerCase().includes(artistName.toLowerCase())
         )) {
           relevanceScore += 40
         }
@@ -352,7 +352,7 @@ class IntelligentSearchEngine {
         return {
           id: artist.id,
           type: 'artist' as const,
-          title: artist.name || 'Unknown Artist',
+          title: artist.full_name || artist.display_name || 'Unknown Artist',
           description: artist.bio || '',
           imageUrl: artist.avatar_url,
           relevanceScore: Math.max(0, relevanceScore),
@@ -411,8 +411,8 @@ class IntelligentSearchEngine {
         }
         
         // Artist name matching
-        if (catalogue.profiles?.display_name?.toLowerCase().includes(nlQuery.query.toLowerCase()) || 
-            catalogue.profiles?.full_name?.toLowerCase().includes(nlQuery.query.toLowerCase())) {
+        if (catalogue.profiles?.[0]?.display_name?.toLowerCase().includes(nlQuery.query.toLowerCase()) ||
+            catalogue.profiles?.[0]?.full_name?.toLowerCase().includes(nlQuery.query.toLowerCase())) {
           relevanceScore += 40
         }
 
@@ -566,7 +566,7 @@ class IntelligentSearchEngine {
         if (artwork.title) suggestions.add(artwork.title)
         if (artwork.genre) suggestions.add(artwork.genre)
         if (artwork.medium) suggestions.add(artwork.medium)
-        if (artwork.profiles?.name) suggestions.add(artwork.profiles.name)
+        if (artwork.profiles?.[0]?.full_name) suggestions.add(artwork.profiles[0].full_name)
       })
 
       return Array.from(suggestions).slice(0, limit)

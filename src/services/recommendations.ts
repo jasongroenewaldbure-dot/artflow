@@ -44,10 +44,17 @@ class RecommendationEngine {
   private cache = new Map<string, Recommendation[]>()
   private cacheExpiry = 5 * 60 * 1000 // 5 minutes
 
+  // Enhanced AI-powered personalized recommendations
   async getPersonalizedRecommendations(
     collectorId: string, 
     limit: number = 20,
-    types: ('artwork' | 'artist' | 'catalogue')[] = ['artwork', 'artist', 'catalogue']
+    types: ('artwork' | 'artist' | 'catalogue')[] = ['artwork', 'artist', 'catalogue'],
+    options: {
+      diversityFactor?: number // 0-1, higher = more diverse recommendations
+      noveltyBoost?: boolean // Boost emerging/unknown artists
+      seasonalTrends?: boolean // Consider seasonal preferences
+      socialSignals?: boolean // Include social proof signals
+    } = {}
   ): Promise<Recommendation[]> {
     try {
       // Check cache first

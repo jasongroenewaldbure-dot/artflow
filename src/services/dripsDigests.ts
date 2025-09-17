@@ -381,7 +381,7 @@ class DripsDigestsService {
       if (!nonOpeners?.length) return;
 
       // Resend with modified subject line
-      const modifiedSubject = this.modifySubjectForResend(originalSubject);
+      const modifiedSubject = this.modifySubjectForResend(email.subject);
       
       for (const recipient of nonOpeners) {
         await this.sendEmailViaService({
