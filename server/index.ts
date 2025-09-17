@@ -113,20 +113,21 @@ async function createServer() {
 
   app.use(async (req, res, next) => {
     try {
-      const html = await render(req.originalUrl, (req as any).cspNonce);
+      const html = await render(req.originalUrl, (req as express.Request & { cspNonce?: string }).cspNonce);
       res.status(200).set({ 'Content-Type': 'text/html' }).end(html);
-    } catch (e: any) {
-      if (!isProd && vite) vite.ssrFixStacktrace(e);
-      next(e);
+    } catch (e: unknown) {
+      const error = e as Error;
+      if (!isProd && vite) vite.ssrFixStacktrace(error);
+      next(error);
     }
   });
 
   if (process.env.SENTRY_DSN) {
     // app.use(Sentry.Handlers.errorHandler());
   }
-  app.use((err: any, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
+  app.use((err: Error & { statusCode?: number; status?: number }, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
     // basic error sanitizer
-    const message = isProd ? 'Internal Server Error' : String(err?.stack || err);
+    const message = isProd ? 'Internal Server Error' : String(err.stack || err.message || err);
     res.status(500).set({ 'Content-Type': 'text/plain' }).end(message);
   });
 

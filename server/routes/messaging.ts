@@ -6,7 +6,7 @@ const router = Router()
 
 router.get('/conversations', requireAuth as any, async (req, res, next) => {
   try {
-    const _userId = await getUserIdFromRequest(req)
+    const userId = await getUserIdFromRequest(req)
     const { data, error } = await supabase
       .from('conversations')
       .select('*, artwork:artwork_id(title), messages:messages(count)')
@@ -20,7 +20,7 @@ router.get('/conversations', requireAuth as any, async (req, res, next) => {
 
 router.get('/conversations/:id/messages', requireAuth as any, async (req, res, next) => {
   try {
-    const _userId = await getUserIdFromRequest(req)
+    const userId = await getUserIdFromRequest(req)
     const id = req.params.id
     const { data, error } = await supabase
       .from('messages')
@@ -35,7 +35,7 @@ router.get('/conversations/:id/messages', requireAuth as any, async (req, res, n
 
 router.post('/conversations/:id/messages', requireAuth as any, async (req, res, next) => {
   try {
-    const _userId = await getUserIdFromRequest(req)
+    const userId = await getUserIdFromRequest(req)
     const id = req.params.id
     const body = await readJson(req)
     const { data, error } = await supabase

@@ -1,0 +1,71 @@
+import{r as t,s as c,j as s,L as U,H as V,a as r}from"./index-Tyz_JBt9.js";import{C as _}from"./Container-D0TcWsx1.js";import{S as n}from"./sparkles-nUh7ue08.js";import{S as N}from"./search-DqHloScL.js";import{T as f}from"./trending-up-CBbI_h7w.js";import{A as l}from"./arrow-right-DYyn1uxC.js";import{B as $}from"./book-open-_JzI9eaT.js";import{S as I}from"./star-ByIxtknh.js";import{E as v}from"./eye-Ctq-Wxgo.js";import{H as w}from"./heart-BZ8u-Y3T.js";import{A as y}from"./award-Bxf8eVx_.js";import{U as B}from"./users-CXkz7CQP.js";import"./createLucideIcon-DhCu6Z8O.js";const ts=()=>{const[k,d]=t.useState([]),[A,m]=t.useState([]),[b,u]=t.useState([]),[S,h]=t.useState([]),[z,x]=t.useState([]),[E,j]=t.useState([]),[C,g]=t.useState(!0),[o,D]=t.useState("");t.useEffect(()=>{F()},[]);const F=async()=>{try{g(!0);try{const e=await M();d(e)}catch(e){console.error("Failed to load trending artists:",e),d([])}try{const e=await T();m(e)}catch(e){console.error("Failed to load featured catalogues:",e),m([])}try{const e=await L();u(e)}catch(e){console.error("Failed to load trending artworks:",e),u([])}try{const e=await P();h(e)}catch(e){console.error("Failed to load curated picks:",e),h([])}try{const e=await q();x(e)}catch(e){console.error("Failed to load emerging artists:",e),x([])}try{const e=await R();j(e)}catch(e){console.error("Failed to load community lists:",e),j([])}}catch(e){console.error("Error loading homepage data:",e)}finally{g(!1)}},M=async()=>{const{data:e,error:a}=await c.from("profiles").select(`
+        id,
+        full_name,
+        display_name,
+        slug,
+        avatar_url,
+        bio,
+        location,
+        created_at
+      `).eq("role","ARTIST").order("created_at",{ascending:!1}).limit(8);return a?(console.error("Error loading trending artists:",a),[]):(e||[]).map(i=>({...i,artwork_count:Math.floor(Math.random()*20)+1,is_trending:Math.random()>.5}))},T=async()=>{try{const{data:e,error:a}=await c.from("catalogues").select(`
+          id,
+          title,
+          slug,
+          description,
+          cover_image_url,
+          created_at,
+          artist:profiles!catalogues_user_id_fkey(
+            id,
+            full_name,
+            slug
+          )
+        `).eq("is_public",!0).order("created_at",{ascending:!1}).limit(6);return a?(console.error("Error loading featured catalogues:",a),[]):(e||[]).map(i=>({...i,artwork_count:Math.floor(Math.random()*20)+5,is_featured:Math.random()>.3}))}catch(e){return console.error("Error in loadFeaturedCatalogues:",e),[]}},L=async()=>{try{const{data:e,error:a}=await c.from("artworks").select(`
+          id,
+          title,
+          slug,
+          image_url,
+          primary_image_url,
+          price,
+          currency,
+          year,
+          medium,
+          status,
+          created_at,
+          artist:profiles!artworks_user_id_fkey(
+            id,
+            full_name,
+            display_name,
+            slug,
+            avatar_url,
+            location
+          )
+        `).eq("status","Available").order("created_at",{ascending:!1}).limit(12);return a?(console.error("Error loading trending artworks:",a),[]):(e||[]).map(i=>({...i,view_count:Math.floor(Math.random()*1e3)+50,like_count:Math.floor(Math.random()*100)+5}))}catch(e){return console.error("Error in loadTrendingArtworks:",e),[]}},P=async()=>{const{data:e,error:a}=await c.from("artworks").select(`
+        id,
+        title,
+        slug,
+        image_url,
+        primary_image_url,
+        price,
+        currency,
+        year,
+        medium,
+        status,
+        created_at,
+        artist:profiles!artworks_user_id_fkey(
+          id,
+          full_name,
+          display_name,
+          slug,
+          avatar_url,
+          location
+        )
+      `).eq("status","Available").order("price",{ascending:!1}).limit(8);if(a)throw a;return e||[]},q=async()=>{const{data:e,error:a}=await c.from("profiles").select(`
+        id,
+        full_name,
+        display_name,
+        slug,
+        avatar_url,
+        bio,
+        location,
+        created_at
+      `).eq("role","ARTIST").gte("created_at",new Date(Date.now()-7776e6).toISOString()).order("created_at",{ascending:!1}).limit(6);if(a)throw a;return(e||[]).map(i=>({...i,artwork_count:Math.floor(Math.random()*10)+1,is_emerging:!0}))},R=async()=>[{id:"1",title:"Abstract Expressionism Favorites",description:"A collection of powerful abstract works",curator:{full_name:"Sarah Chen",avatar_url:"https://placehold.co/40x40"},artwork_count:15,likes_count:234,is_public:!0},{id:"2",title:"Emerging South African Artists",description:"Discovering new talent from South Africa",curator:{full_name:"Michael Johnson",avatar_url:"https://placehold.co/40x40"},artwork_count:22,likes_count:189,is_public:!0},{id:"3",title:"Minimalist Masterpieces",description:"Less is more - beautiful minimalist art",curator:{full_name:"Emma Rodriguez",avatar_url:"https://placehold.co/40x40"},artwork_count:18,likes_count:156,is_public:!0}],p=(e,a="USD")=>new Intl.NumberFormat("en-US",{style:"currency",currency:a}).format(e),H=e=>{e.preventDefault(),o.trim()&&(window.location.href=`/artworks?search=${encodeURIComponent(o)}`)};return C?s.jsx("div",{className:"home-page",children:s.jsx(_,{children:s.jsx("div",{className:"page-loading",children:s.jsx(U,{size:"lg",text:"Loading amazing art..."})})})}):s.jsxs(s.Fragment,{children:[s.jsxs(V,{children:[s.jsx("title",{children:"ArtFlow - Discover Amazing Art"}),s.jsx("meta",{name:"description",content:"Discover amazing artworks from talented artists around the world"})]}),s.jsx("div",{className:"home-page",children:s.jsxs(_,{children:[s.jsx("div",{className:"hero-section",children:s.jsxs("div",{className:"hero-content",children:[s.jsxs("h1",{className:"hero-title",children:["Discover Amazing Art",s.jsx(n,{className:"hero-icon"})]}),s.jsx("p",{className:"hero-subtitle",children:"Explore unique artworks from talented artists around the world"}),s.jsxs("form",{onSubmit:H,className:"hero-search",children:[s.jsxs("div",{className:"search-bar",children:[s.jsx(N,{size:20,className:"search-icon"}),s.jsx("input",{type:"text",placeholder:"Search artworks, artists, or collections...",value:o,onChange:e=>D(e.target.value),className:"search-input"})]}),s.jsx("button",{type:"submit",className:"search-btn",children:s.jsx(N,{size:18})})]})]})}),s.jsxs("section",{className:"home-section",children:[s.jsxs("div",{className:"section-header",children:[s.jsxs("h2",{className:"section-title",children:[s.jsx(f,{size:24}),"Trending Artists"]}),s.jsxs(r,{to:"/artists",className:"view-all-btn",children:["View All ",s.jsx(l,{size:16})]})]}),s.jsx("div",{className:"artists-carousel",children:k.map(e=>s.jsx("div",{className:"artist-card",children:s.jsxs(r,{to:`/artist/${e.slug}`,children:[s.jsxs("div",{className:"artist-avatar",children:[s.jsx("img",{src:e.avatar_url||"https://placehold.co/80x80",alt:e.full_name}),e.is_trending&&s.jsx("div",{className:"trending-badge",children:s.jsx(f,{size:12})})]}),s.jsxs("div",{className:"artist-info",children:[s.jsx("h3",{className:"artist-name",children:e.full_name}),s.jsx("p",{className:"artist-location",children:e.location}),s.jsxs("p",{className:"artist-stats",children:[e.artwork_count," artworks"]})]})]})},e.id))})]}),s.jsxs("section",{className:"home-section",children:[s.jsxs("div",{className:"section-header",children:[s.jsxs("h2",{className:"section-title",children:[s.jsx($,{size:24}),"Featured Catalogues"]}),s.jsxs(r,{to:"/catalogues",className:"view-all-btn",children:["View All ",s.jsx(l,{size:16})]})]}),s.jsx("div",{className:"catalogues-carousel",children:A.map(e=>s.jsx("div",{className:"catalogue-card",children:s.jsxs(r,{to:`/catalogue/${e.slug}`,children:[s.jsxs("div",{className:"catalogue-image",children:[s.jsx("img",{src:e.cover_image_url||"https://placehold.co/300x200",alt:e.title}),e.is_featured&&s.jsxs("div",{className:"featured-badge",children:[s.jsx(I,{size:12}),"Featured"]})]}),s.jsxs("div",{className:"catalogue-info",children:[s.jsx("h3",{className:"catalogue-title",children:e.title}),s.jsxs("p",{className:"catalogue-artist",children:["by ",e.artist.full_name]}),s.jsxs("p",{className:"catalogue-stats",children:[e.artwork_count," artworks"]})]})]})},e.id))})]}),s.jsxs("section",{className:"home-section",children:[s.jsxs("div",{className:"section-header",children:[s.jsxs("h2",{className:"section-title",children:[s.jsx(v,{size:24}),"Trending Artworks"]}),s.jsxs(r,{to:"/artworks?sort=trending",className:"view-all-btn",children:["View All ",s.jsx(l,{size:16})]})]}),s.jsx("div",{className:"artworks-carousel",children:b.slice(0,8).map(e=>s.jsx("div",{className:"artwork-card-small",children:s.jsxs(r,{to:`/artwork/${e.slug}`,children:[s.jsxs("div",{className:"artwork-image",children:[s.jsx("img",{src:e.primary_image_url||e.image_url||"https://placehold.co/250x250",alt:e.title}),s.jsx("div",{className:"artwork-overlay",children:s.jsxs("div",{className:"artwork-stats",children:[s.jsxs("span",{children:[s.jsx(v,{size:12})," ",e.view_count]}),s.jsxs("span",{children:[s.jsx(w,{size:12})," ",e.like_count]})]})})]}),s.jsxs("div",{className:"artwork-info",children:[s.jsx("h3",{className:"artwork-title",children:e.title}),s.jsx("p",{className:"artwork-artist",children:e.artist.full_name}),s.jsx("p",{className:"artwork-price",children:e.price>0?p(e.price,e.currency):"Price on Request"})]})]})},e.id))})]}),s.jsxs("section",{className:"home-section",children:[s.jsxs("div",{className:"section-header",children:[s.jsxs("h2",{className:"section-title",children:[s.jsx(y,{size:24}),"Curated Picks"]}),s.jsxs(r,{to:"/artworks?curated=true",className:"view-all-btn",children:["View All ",s.jsx(l,{size:16})]})]}),s.jsx("div",{className:"artworks-carousel",children:S.map(e=>s.jsx("div",{className:"artwork-card-small",children:s.jsxs(r,{to:`/artwork/${e.slug}`,children:[s.jsxs("div",{className:"artwork-image",children:[s.jsx("img",{src:e.primary_image_url||e.image_url||"https://placehold.co/250x250",alt:e.title}),s.jsxs("div",{className:"curated-badge",children:[s.jsx(y,{size:12}),"Curated"]})]}),s.jsxs("div",{className:"artwork-info",children:[s.jsx("h3",{className:"artwork-title",children:e.title}),s.jsx("p",{className:"artwork-artist",children:e.artist.full_name}),s.jsx("p",{className:"artwork-price",children:e.price>0?p(e.price,e.currency):"Price on Request"})]})]})},e.id))})]}),s.jsxs("section",{className:"home-section",children:[s.jsxs("div",{className:"section-header",children:[s.jsxs("h2",{className:"section-title",children:[s.jsx(n,{size:24}),"Emerging Artists"]}),s.jsxs(r,{to:"/artists?emerging=true",className:"view-all-btn",children:["View All ",s.jsx(l,{size:16})]})]}),s.jsx("div",{className:"artists-carousel",children:z.map(e=>s.jsx("div",{className:"artist-card",children:s.jsxs(r,{to:`/artist/${e.slug}`,children:[s.jsxs("div",{className:"artist-avatar",children:[s.jsx("img",{src:e.avatar_url||"https://placehold.co/80x80",alt:e.full_name}),s.jsxs("div",{className:"emerging-badge",children:[s.jsx(n,{size:12}),"New"]})]}),s.jsxs("div",{className:"artist-info",children:[s.jsx("h3",{className:"artist-name",children:e.full_name}),s.jsx("p",{className:"artist-location",children:e.location}),s.jsxs("p",{className:"artist-stats",children:[e.artwork_count," artworks"]})]})]})},e.id))})]}),s.jsxs("section",{className:"home-section",children:[s.jsxs("div",{className:"section-header",children:[s.jsxs("h2",{className:"section-title",children:[s.jsx(B,{size:24}),"Community Lists"]}),s.jsxs(r,{to:"/community",className:"view-all-btn",children:["View All ",s.jsx(l,{size:16})]})]}),s.jsx("div",{className:"community-lists",children:E.map(e=>s.jsxs("div",{className:"community-list-card",children:[s.jsxs("div",{className:"list-header",children:[s.jsxs("div",{className:"curator-info",children:[s.jsx("img",{src:e.curator.avatar_url,alt:e.curator.full_name,className:"curator-avatar"}),s.jsx("span",{className:"curator-name",children:e.curator.full_name})]}),s.jsxs("div",{className:"list-stats",children:[s.jsx(w,{size:14})," ",e.likes_count]})]}),s.jsxs("div",{className:"list-content",children:[s.jsx("h3",{className:"list-title",children:e.title}),s.jsx("p",{className:"list-description",children:e.description}),s.jsxs("p",{className:"list-count",children:[e.artwork_count," artworks"]})]})]},e.id))})]})]})})]})};export{ts as default};
