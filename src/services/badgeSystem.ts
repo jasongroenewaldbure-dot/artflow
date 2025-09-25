@@ -1,4 +1,3 @@
-// Intelligent Badge System for Artworks, Artists, and Catalogues
 import { supabase } from '../lib/supabase'
 
 export interface Badge {

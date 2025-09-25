@@ -162,7 +162,7 @@ export async function validateUserSession(userId: string): Promise<boolean> {
     const { data: user, error } = await supabase
       .from('profiles')
       .select('id, status')
-      .eq('id', userId)
+      .eq('user_id', userId)
       .single()
 
     if (error || !user) return false
@@ -185,7 +185,7 @@ export async function checkUserPermissions(
     const { data: user, error } = await supabase
       .from('profiles')
       .select('role, status')
-      .eq('id', userId)
+      .eq('user_id', userId)
       .single()
 
     if (error || !user) return false

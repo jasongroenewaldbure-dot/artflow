@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom'
 import { ShoppingBag, Search, Filter, Grid, List, Share2, Eye, Calendar, MapPin, Palette, Ruler, Download, FileText } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../contexts/AuthProvider'
-import Container from "../../components/common/Container"
+import Container from "../brush/components/forms/Container"
 import ArtworkCard from '../../components/marketplace/ArtworkCard'
 import { showErrorToast } from '../../utils/errorHandling'
 

@@ -1,8 +1,3 @@
-/**
- * Database Validation Service
- * Validates database schema consistency and catches data integrity issues
- */
-
 import { supabase } from '../lib/supabase'
 
 export interface ValidationResult {

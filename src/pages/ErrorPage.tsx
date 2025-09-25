@@ -1,8 +1,8 @@
 import React from 'react'
 import { Helmet } from 'react-helmet-async'
 import { Link } from 'react-router-dom'
-import Container from "../components/common/Container"
-import Icon from '../components/icons/Icon'
+import Container from "../brush/components/forms/Container"
+import Icon from "../brush/Icon"
 
 interface ErrorPageProps {
   statusCode?: number

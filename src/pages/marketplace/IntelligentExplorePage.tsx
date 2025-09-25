@@ -6,7 +6,7 @@ import { useAuth } from '../../contexts/AuthProvider'
 import AdvancedSearchInterface from '../../components/common/AdvancedSearchInterface'
 import LivePreferenceControls, { LivePreferences } from '../../components/common/LivePreferenceControls'
 import SerendipityEngine from '../../components/common/SerendipityEngine'
-import Container from '../../components/common/Container'
+import Container from "../../brush/components/forms/Container"
 
 interface IntelligentExplorePageProps {}
 

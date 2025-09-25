@@ -1,0 +1,94 @@
+import React from 'react'
+
+interface IconProps {
+  name: string
+  size?: number
+  className?: string
+  style?: React.CSSProperties
+  color?: string
+}
+
+// SVG icon mappings
+const iconSvgs: Record<string, string> = {
+  'star': '/src/components/icons/star.svg',
+  'artworks': '/src/components/icons/artworks.svg',
+  'catalogue': '/src/components/icons/catalogue.svg',
+  'contacts': '/src/components/icons/contacts.svg',
+  'dashboard': '/src/components/icons/dashboard.svg',
+  'drag': '/src/components/icons/drag.svg',
+  'favourite': '/src/components/icons/favourite.svg',
+  'file': '/src/components/icons/file.svg',
+  'inbox': '/src/components/icons/inbox.svg',
+  'insights': '/src/components/icons/insights.svg',
+  'location': '/src/components/icons/location.svg',
+  'login': '/src/components/icons/login.svg',
+  'natural-search': '/src/components/icons/natural-search.svg',
+  'roadmap': '/src/components/icons/roadmap.svg',
+  'security': '/src/components/icons/security.svg',
+  'settings': '/src/components/icons/settings.svg'
+}
+
+const Icon: React.FC<IconProps> = ({ name, size = 24, className, style, color }) => {
+  const svgPath = iconSvgs[name]
+  
+  if (svgPath) {
+    return (
+      <img
+        src={svgPath}
+        alt={name}
+        className={className}
+        style={{
+          width: size,
+          height: size,
+          display: 'inline-block',
+          filter: color ? `brightness(0) saturate(100%) ${color}` : undefined,
+          ...style
+        }}
+      />
+    )
+  }
+  
+  // Fallback for unknown icons - use Lucide React or emoji
+  const fallbackIcons: Record<string, string> = {
+    'heart': '❤️',
+    'search': '🔍',
+    'user': '👤',
+    'grid': '⊞',
+    'list': '☰',
+    'x': '✕',
+    'plus': '+',
+    'arrow-right': '→',
+    'arrow-left': '←',
+    'image': '🖼️',
+    'heart-filled': '❤️',
+    'grid-3x3': '⊞',
+    'check': '✓',
+    'filter': '🔽',
+    'edit': '✏️',
+    'trash': '🗑️',
+    'eye': '👁️',
+    'share': '📤',
+    'download': '⬇️'
+  }
+  
+  return (
+    <span 
+      className={className}
+      style={{
+        width: size,
+        height: size,
+        display: 'inline-flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        fontSize: size * 0.8,
+        color: color,
+        ...style
+      }}
+      data-icon={name}
+    >
+      {fallbackIcons[name] || name}
+    </span>
+  )
+}
+
+export default Icon

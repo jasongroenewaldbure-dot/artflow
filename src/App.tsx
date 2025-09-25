@@ -3,10 +3,10 @@ import { Helmet } from 'react-helmet-async'
 import { Route, Routes, useLocation, Navigate } from 'react-router-dom'
 import { BrushProvider } from './brush/BrushProvider'
 import { AuthProvider } from './contexts/AuthProvider'
-import NavigationProvider from './components/navigation/NavigationProvider'
-import ProtectedRoute from './components/auth/ProtectedRoute'
-import DashboardLayout from './components/layout/DashboardLayout'
-import ErrorBoundary from './components/common/ErrorBoundary'
+import NavigationProvider from './brush/components/navigation/NavigationProvider'
+import ProtectedRoute from './brush/components/auth/ProtectedRoute'
+import DashboardLayout from './brush/components/layout/DashboardLayout'
+import ErrorBoundary from './brush/components/forms/ErrorBoundary'
 import { addResourceHints, measureWebVitals } from '@/services/performance'
 import './brush/theme.css'
 
@@ -28,6 +28,7 @@ const ArtistSettingsPage = lazy(() => import('./pages/profile/ArtistSettings'))
 const CollectorQuizPage = lazy(() => import('./pages/profile/CollectorQuiz'))
 const CataloguePage = lazy(() => import('./pages/marketplace/CataloguePage'))
 const BrowseCataloguesPage = lazy(() => import('./pages/marketplace/BrowseCataloguesPage'))
+const CommunityPage = lazy(() => import('./pages/marketplace/CommunityPage'))
 const FavoritesPage = lazy(() => import('./pages/profile/FavoritesPage'))
 const CollectionPage = lazy(() => import('./pages/profile/CollectionPage'))
 const SocialFeaturesPage = lazy(() => import('./pages/profile/SocialFeaturesPage'))
@@ -159,6 +160,11 @@ export default function App() {
                 <BrowseCataloguesPage />
               </NavigationProvider>
             } />
+            <Route path="/community" element={
+              <NavigationProvider>
+                <CommunityPage />
+              </NavigationProvider>
+            } />
             <Route path="/artist/:artistSlug/catalogue/:catalogueSlug" element={
               <NavigationProvider>
                 <CataloguePage />
@@ -233,6 +239,13 @@ export default function App() {
               <ProtectedRoute>
                 <NavigationProvider>
                   <SettingsPage />
+                </NavigationProvider>
+              </ProtectedRoute>
+            } />
+            <Route path="/u/profile" element={
+              <ProtectedRoute>
+                <NavigationProvider>
+                  <ArtistProfilePage />
                 </NavigationProvider>
               </ProtectedRoute>
             } />

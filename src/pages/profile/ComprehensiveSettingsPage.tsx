@@ -7,7 +7,7 @@ import {
 } from 'lucide-react'
 import { useAuth } from '../../contexts/AuthProvider'
 import { supabase } from '../../lib/supabase'
-import Container from '../../components/common/Container'
+import Container from "../brush/components/forms/Container'
 import LivePreferenceControls, { LivePreferences } from '../../components/common/LivePreferenceControls'
 
 interface CollectorLearnings {

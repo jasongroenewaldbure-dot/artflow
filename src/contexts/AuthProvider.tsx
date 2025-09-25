@@ -9,9 +9,8 @@ interface Profile {
   role: 'artist' | 'collector' | 'both'
   display_name: string
   avatar_url?: string
-  profile_completed?: boolean
-  password_set?: boolean
-  onboarding_completed?: boolean
+  profile_complete: boolean
+  password_set: boolean
 }
 
 interface AuthContextType {
@@ -63,8 +62,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       // Then get the profile from profiles table using user_id
       const { data: profileData, error } = await supabase
         .from('profiles')
-        .select('display_name, full_name, role, avatar_url, created_at')
-        .eq('id', userId)
+        .select('display_name, full_name, role, avatar_url, created_at, profile_complete, password_set')
+        .eq('user_id', userId)
         .single()
       
       if (error) {
@@ -79,7 +78,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         display_name: profileData.display_name || profileData.full_name || authUser.email || 'User',
         full_name: profileData.full_name || authUser.email || 'User',
         avatar_url: profileData.avatar_url,
-        created_at: profileData.created_at
+        created_at: profileData.created_at,
+        profile_complete: profileData.profile_complete || false,
+        password_set: profileData.password_set || false
       }
     } catch (error) {
       console.warn('Error fetching profile:', error)

@@ -520,14 +520,21 @@ export interface UpdateProfileInput {
 
 // GraphQL Error handling
 export class GraphQLError extends Error {
+  code: string
+  statusCode: number
+  details?: any
+
   constructor(
     message: string,
-    public code: string,
-    public statusCode: number = 400,
-    public details?: any
+    code: string,
+    statusCode: number = 400,
+    details?: any
   ) {
     super(message)
     this.name = 'GraphQLError'
+    this.code = code
+    this.statusCode = statusCode
+    this.details = details
   }
 }
 

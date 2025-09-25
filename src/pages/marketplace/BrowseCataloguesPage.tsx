@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { Helmet } from 'react-helmet-async'
 import { Link } from 'react-router-dom'
 import { supabase } from '@/lib/supabase'
-import Icon from '@/components/icons/Icon'
+import Icon from "../../brush/Icon"
 import { toast } from 'react-hot-toast'
 
 interface Catalogue {

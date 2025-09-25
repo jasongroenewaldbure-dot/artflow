@@ -2,12 +2,12 @@ import React, { useState, useEffect } from 'react'
 import { Helmet } from 'react-helmet-async'
 import { Link, useSearchParams } from 'react-router-dom'
 import { supabase } from '@/lib/supabase'
-import Icon from '@/components/icons/Icon'
+import Icon from "../../brush/Icon"
 import { showErrorToast } from '@/utils/errorHandling'
-import Container from "../../components/common/Container"
-import LoadingSpinner from "../../components/common/LoadingSpinner"
-import ErrorMessage from "../../components/common/ErrorMessage"
-import HorizontalFilterSystem from '@/components/marketplace/HorizontalFilterSystem'
+import Container from "../../brush/components/forms/Container"
+import LoadingSpinner from "../../brush/components/feedback/LoadingSpinner"
+import ErrorMessage from "../../brush/components/forms/ErrorMessage"
+import HorizontalFilterSystem from "../../brush/components/marketplace/HorizontalFilterSystem"
 
 interface Artist {
   id: string

@@ -3,7 +3,7 @@ import { Navigate } from 'react-router-dom'
 import { Helmet } from 'react-helmet-async'
 import { Link } from 'react-router-dom'
 import { supabase } from '@/lib/supabase'
-import LoadingSpinner from "../components/common/LoadingSpinner"
+import LoadingSpinner from "../brush/components/feedback/LoadingSpinner"
 import { 
   Plus, 
   Palette, 
@@ -31,8 +31,8 @@ type User = {
   email: string
   role: 'artist' | 'collector' | 'both'
   name?: string
-  password_set?: boolean
-  profile_completed?: boolean
+  password_set: boolean
+  profile_complete: boolean
 }
 
 interface TodoItem {
@@ -194,7 +194,7 @@ export default function Dashboard() {
         const { data: profile, error: profileError } = await supabase
           .from('profiles')
           .select('display_name, full_name, role, created_at')
-          .eq('id', user.id)
+          .eq('user_id', user.id)
           .single()
 
         if (profileError) {
@@ -207,7 +207,7 @@ export default function Dashboard() {
         }
 
         // Check if profile is complete
-        const isProfileComplete = profile.role && profile.password_set && profile.profile_completed
+        const isProfileComplete = profile.role && profile.password_set && profile.profile_complete
 
         setMe({
           id: user.id,
@@ -215,7 +215,7 @@ export default function Dashboard() {
           role: profile.role || 'collector',
           name: profile.display_name || user.email || 'User',
           password_set: profile.password_set || false,
-          profile_completed: isProfileComplete
+          profile_complete: isProfileComplete
         })
       } catch (error) {
         console.error('Error fetching user:', error)
@@ -260,7 +260,7 @@ export default function Dashboard() {
   }
 
   // Redirect to onboarding if profile incomplete
-  if (!loading && me && (!me.profile_completed || !me.password_set)) {
+  if (!loading && me && (!me.profile_complete || !me.password_set)) {
     return <Navigate to="/onboarding" replace />
   }
 

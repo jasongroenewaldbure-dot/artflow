@@ -3,9 +3,9 @@ import { Helmet } from 'react-helmet-async'
 import { Link } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../contexts/AuthProvider'
-import Container from "../../components/common/Container"
+import Container from "../brush/components/forms/Container"
 import { showErrorToast, showSuccessToast } from '../../utils/errorHandling'
-import Icon from '../../components/icons/Icon'
+import Icon from "../../brush/Icon"
 
 interface Conversation {
   id: string

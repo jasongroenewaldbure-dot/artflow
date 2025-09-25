@@ -1,6 +1,5 @@
 // Enhanced Intelligent Badge System with Nuanced Scoring and ML
 import { supabase } from '../lib/supabase'
-import { cachedQuery, clearCache } from './database'
 
 export interface IntelligentBadge {
   id: string
@@ -29,49 +28,6 @@ export interface BadgeContext {
   marketTrends?: any
   timeWindow?: 'hour' | 'day' | 'week' | 'month' | 'year'
   location?: string
-}
-
-// Advanced scoring algorithms
-class BadgeScoringEngine {
-  // Time decay function for trending badges
-  static calculateTimeDecay(score: number, ageInHours: number, decayRate: number = 0.1): number {
-    return score * Math.exp(-decayRate * ageInHours)
-  }
-
-  // Velocity calculation for rising badges
-  static calculateVelocity(currentScore: number, previousScore: number, timeDiff: number): number {
-    return (currentScore - previousScore) / timeDiff
-  }
-
-  // Market context adjustment
-  static adjustForMarketContext(score: number, marketTrend: 'bull' | 'bear' | 'stable', category: string): number {
-    const adjustments = {
-      'bull': { 'contemporary': 1.2, 'digital': 1.3, 'traditional': 1.1 },
-      'bear': { 'contemporary': 0.8, 'digital': 0.7, 'traditional': 0.9 },
-      'stable': { 'contemporary': 1.0, 'digital': 1.0, 'traditional': 1.0 }
-    }
-    
-    return score * (adjustments[marketTrend][category] || 1.0)
-  }
-
-  // User behavior weighting
-  static weightByUserBehavior(score: number, userEngagement: number, userValue: number): number {
-    const engagementWeight = Math.min(userEngagement / 100, 1.0) // Cap at 1.0
-    const valueWeight = Math.min(userValue / 1000, 1.0) // Cap at 1.0
-    
-    return score * (0.6 + 0.2 * engagementWeight + 0.2 * valueWeight)
-  }
-
-  // Seasonal adjustments
-  static applySeasonalAdjustment(score: number, month: number, category: string): number {
-    const seasonalFactors = {
-      'contemporary': [1.1, 1.0, 1.2, 1.3, 1.2, 1.1, 0.9, 0.8, 1.0, 1.1, 1.2, 1.0],
-      'digital': [1.0, 1.0, 1.1, 1.2, 1.3, 1.2, 1.1, 1.0, 1.1, 1.2, 1.1, 1.0],
-      'traditional': [1.2, 1.1, 1.0, 0.9, 0.8, 0.9, 1.0, 1.1, 1.2, 1.3, 1.2, 1.1]
-    }
-    
-    return score * (seasonalFactors[category]?.[month - 1] || 1.0)
-  }
 }
 
 // Enhanced badge definitions with nuanced criteria
@@ -230,27 +186,6 @@ class MLBadgeScorer {
     return Math.max(0, Math.min(100, score))
   }
 
-  static calculateUserBehaviorScore(userEngagement: any, userValue: number): number {
-    const engagementScore = this.calculateEngagementScore(userEngagement)
-    const valueScore = Math.min(userValue / 1000, 1.0) * 100
-
-    return (engagementScore * 0.7 + valueScore * 0.3)
-  }
-
-  static calculateSeasonalScore(artwork: any): number {
-    const month = new Date().getMonth() + 1
-    const category = artwork.genre || 'contemporary'
-    
-    const seasonalFactors = {
-      'contemporary': [1.0, 0.9, 1.1, 1.2, 1.3, 1.2, 1.0, 0.8, 0.9, 1.1, 1.2, 1.0],
-      'digital': [1.0, 1.0, 1.0, 1.1, 1.2, 1.3, 1.2, 1.1, 1.0, 1.1, 1.0, 1.0],
-      'traditional': [1.2, 1.1, 1.0, 0.9, 0.8, 0.9, 1.0, 1.1, 1.2, 1.3, 1.2, 1.1]
-    }
-
-    const factor = seasonalFactors[category]?.[month - 1] || 1.0
-    return factor * 50 // Base seasonal score
-  }
-
   static calculateOverallScore(
     engagementScore: number,
     velocityScore: number,
@@ -292,13 +227,18 @@ class ContextualBadgeRecommender {
 
   private static shouldShowBadge(badge: IntelligentBadge, context: BadgeContext): boolean {
     // Don't show certain badges to artists for their own work
-    if (context.userRole === 'ARTIST' && badge.type === 'collector_interest') {
+    if (context.userRole === 'ARTIST' && (badge.type === 'collector_interest' || badge.type === 'investment_grade')) {
       return false
     }
 
     // Show investment grade badges only to collectors
     if (badge.type === 'investment_grade' && context.userRole !== 'COLLECTOR') {
       return false
+    }
+
+    // Always show sold out or limited edition badges if applicable
+    if (badge.type === 'sold_out' || badge.type === 'limited_edition') {
+      return true
     }
 
     // Minimum confidence threshold
@@ -314,12 +254,12 @@ class ContextualBadgeRecommender {
     }
 
     // Boost trending badges for collectors
-    if (context.userRole === 'COLLECTOR' && badge.type === 'trending') {
+    if (context.userRole === 'COLLECTOR' && (badge.type === 'trending' || badge.type === 'viral')) {
       score *= 1.15
     }
 
     // Boost emerging badges for artists
-    if (context.userRole === 'ARTIST' && badge.type === 'emerging') {
+    if (context.userRole === 'ARTIST' && (badge.type === 'emerging' || badge.type === 'rising')) {
       score *= 1.1
     }
 
@@ -351,29 +291,12 @@ export async function calculateIntelligentBadges(
       entityData.timeDiff || 1
     )
     const marketScore = MLBadgeScorer.calculateMarketContextScore(entityData, marketTrends)
-    const behaviorScore = MLBadgeScorer.calculateUserBehaviorScore(
-      entityData.userEngagement || {},
-      entityData.userValue || 0
-    )
-    const seasonalScore = MLBadgeScorer.calculateSeasonalScore(entityData)
-
-    // Calculate overall score
-    const overallScore = MLBadgeScorer.calculateOverallScore(
-      engagementScore,
-      velocityScore,
-      marketScore,
-      behaviorScore,
-      seasonalScore
-    )
 
     // Determine badges based on scores and criteria
     const badgeCandidates = await determineBadgeCandidates(entityData, {
       engagementScore,
       velocityScore,
-      marketScore,
-      behaviorScore,
-      seasonalScore,
-      overallScore
+      marketScore
     })
 
     // Create intelligent badges with confidence scores
@@ -398,9 +321,7 @@ export async function calculateIntelligentBadges(
 
 // Helper functions
 async function getEntityWithMetrics(entityId: string, entityType: string): Promise<any> {
-  const cacheKey = `${entityType}_${entityId}_metrics`
-  
-  return await cachedQuery(cacheKey, async () => {
+  try {
     let query
     switch (entityType) {
       case 'artwork':
@@ -408,9 +329,7 @@ async function getEntityWithMetrics(entityId: string, entityType: string): Promi
           .from('artworks')
           .select(`
             *,
-            user:profiles!artworks_user_id_fkey(*),
-            artwork_metrics(*),
-            previous_metrics:artwork_metrics!previous_metrics_fkey(*)
+            profiles!artworks_user_id_fkey(*)
           `)
           .eq('id', entityId)
         break
@@ -419,8 +338,7 @@ async function getEntityWithMetrics(entityId: string, entityType: string): Promi
           .from('profiles')
           .select(`
             *,
-            artworks(id, artwork_metrics(*)),
-            artist_metrics(*)
+            artworks!artworks_user_id_fkey(id)
           `)
           .eq('id', entityId)
         break
@@ -429,8 +347,7 @@ async function getEntityWithMetrics(entityId: string, entityType: string): Promi
           .from('catalogues')
           .select(`
             *,
-            user:profiles!catalogues_user_id_fkey(*),
-            catalogue_metrics(*)
+            profiles!catalogues_user_id_fkey(*)
           `)
           .eq('id', entityId)
         break
@@ -441,29 +358,30 @@ async function getEntityWithMetrics(entityId: string, entityType: string): Promi
     const { data, error } = await query.single()
     if (error) throw error
     return data
-  }, 5 * 60 * 1000) // 5 minute cache
+  } catch (error) {
+    console.error('Error getting entity with metrics:', error)
+    return null
+  }
 }
 
 async function getMarketTrends(): Promise<any> {
-  return await cachedQuery('market_trends', async () => {
-    // In production, this would fetch from a market data API
-    return {
-      trend: 'bull',
-      categoryPopularity: {
-        'contemporary': 0.8,
-        'digital': 0.9,
-        'traditional': 0.6
-      }
+  // In production, this would fetch from a market data API
+  return {
+    trend: 'bull',
+    categoryPopularity: {
+      'contemporary': 0.8,
+      'digital': 0.9,
+      'traditional': 0.6
     }
-  }, 60 * 60 * 1000) // 1 hour cache
+  }
 }
 
 async function determineBadgeCandidates(entityData: any, scores: any): Promise<any[]> {
   const candidates = []
 
   // Emerging artist (new account)
-  if (entityData.user?.created_at) {
-    const ageInDays = (Date.now() - new Date(entityData.user.created_at).getTime()) / (1000 * 60 * 60 * 24)
+  if (entityData.profiles?.created_at) {
+    const ageInDays = (Date.now() - new Date(entityData.profiles.created_at).getTime()) / (1000 * 60 * 60 * 24)
     if (ageInDays < 30) {
       candidates.push({
         type: 'emerging_artist',
@@ -473,60 +391,12 @@ async function determineBadgeCandidates(entityData: any, scores: any): Promise<a
     }
   }
 
-  // Rising artist (growing velocity)
-  if (scores.velocityScore > 30) {
-    candidates.push({
-      type: 'rising_artist',
-      confidence: Math.min(scores.velocityScore / 100, 0.9),
-      factors: ['high_velocity', 'growing_engagement']
-    })
-  }
-
-  // Viral artwork (explosive growth)
-  if (scores.velocityScore > 70 && scores.engagementScore > 60) {
-    candidates.push({
-      type: 'viral_artwork',
-      confidence: Math.min((scores.velocityScore + scores.engagementScore) / 200, 0.95),
-      factors: ['explosive_growth', 'high_engagement']
-    })
-  }
-
-  // Trending (high engagement)
+  // Trending artwork (high engagement)
   if (scores.engagementScore > 50) {
     candidates.push({
       type: 'trending_artwork',
       confidence: Math.min(scores.engagementScore / 100, 0.8),
       factors: ['high_engagement', 'popular_content']
-    })
-  }
-
-  // Collector interest (inquiries and favorites)
-  if (entityData.metrics?.inquiry_count > 5 || entityData.metrics?.favorite_count > 20) {
-    candidates.push({
-      type: 'collector_interest',
-      confidence: Math.min(
-        ((entityData.metrics?.inquiry_count || 0) / 10 + (entityData.metrics?.favorite_count || 0) / 50),
-        0.9
-      ),
-      factors: ['high_inquiries', 'collector_favorites']
-    })
-  }
-
-  // Investment grade (high value and market score)
-  if (entityData.price > 5000 && scores.marketScore > 70) {
-    candidates.push({
-      type: 'investment_grade',
-      confidence: Math.min((scores.marketScore + (entityData.price / 10000)) / 200, 0.85),
-      factors: ['high_value', 'strong_market', 'investment_potential']
-    })
-  }
-
-  // Limited edition
-  if (entityData.edition_size && entityData.edition_size <= 10) {
-    candidates.push({
-      type: 'limited_edition',
-      confidence: 0.9,
-      factors: ['limited_quantity', 'exclusive_edition']
     })
   }
 
@@ -567,4 +437,4 @@ async function createIntelligentBadge(candidate: any, entityData: any, context: 
 }
 
 // Export main functions
-export { ContextualBadgeRecommender, MLBadgeScorer, BadgeScoringEngine }
+export { ContextualBadgeRecommender, MLBadgeScorer }

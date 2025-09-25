@@ -6,8 +6,8 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 import { format, subMonths } from 'date-fns'
 import toast from 'react-hot-toast'
 import { useAuth } from '../contexts/AuthProvider'
-import Container from "../components/common/Container"
-import Icon from '../components/icons/Icon'
+import Container from "../brush/components/forms/Container"
+import Icon from '../brush/Icon'
 
 interface AppSale {
   id: string

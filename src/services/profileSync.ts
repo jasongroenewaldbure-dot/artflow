@@ -41,7 +41,7 @@ class ProfileSyncService {
       const { data, error } = await supabase
         .from('profiles')
         .select('id')
-        .eq('id', userId)
+        .eq('user_id', userId)
         .single()
 
       if (error && error.code !== 'PGRST116') { // PGRST116 = no rows returned
@@ -63,7 +63,7 @@ class ProfileSyncService {
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
-        .eq('id', userId)
+        .eq('user_id', userId)
         .single()
 
       if (error) {
@@ -154,7 +154,7 @@ class ProfileSyncService {
       const { data, error } = await supabase
         .from('profiles')
         .update(updateData)
-        .eq('id', userId)
+        .eq('user_id', userId)
         .select()
         .single()
 

@@ -19,8 +19,8 @@ import {
   ChevronRight
 } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
-import LoadingSpinner from "../../components/common/LoadingSpinner"
-import Container from "../../components/common/Container"
+import LoadingSpinner from "../brush/components/feedback/LoadingSpinner"
+import Container from "../brush/components/forms/Container"
 
 interface Artwork {
   id: string

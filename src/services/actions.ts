@@ -63,4 +63,3 @@ export async function recordArtworkShare(params: { artworkId: string; platform: 
   const { error } = await supabase.from('artwork_shares').insert({ artwork_id: params.artworkId, platform: params.platform })
   if (error) throw error
 }
-

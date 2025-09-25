@@ -4,7 +4,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Helmet } from 'react-helmet-async';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthProvider';
-import Container from '../../components/common/Container';
+import Container from "../../brush/components/forms/Container";
 import Toggle from '../../components/common/Toggle';
 import LivePreferenceControls from '../../components/common/LivePreferenceControls';
 import { logger, useLogger } from '../../services/logger';
@@ -378,7 +378,7 @@ const EnhancedCollectorSettingsPage: React.FC = () => {
         const { data: profileData, error: profileError } = await supabase
           .from('profiles')
           .update(profileUpdates)
-          .eq('id', user.id)
+          .eq('user_id', user.id)
           .select()
           .single();
         if (profileError) throw profileError;

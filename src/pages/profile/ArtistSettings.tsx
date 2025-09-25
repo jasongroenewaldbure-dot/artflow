@@ -15,7 +15,7 @@ export default function ArtistSettings() {
       const { data: u } = await supabase.auth.getUser()
       const id = u.user?.id
       if (!id) return
-      const { data } = await supabase.from('profiles').select('full_name,bio,avatar_url').eq('id', id).single()
+      const { data } = await supabase.from('profiles').select('full_name,bio,avatar_url').eq('user_id', id).single()
       if (data) {
         setName(data.full_name || '')
         setBio(data.bio || '')

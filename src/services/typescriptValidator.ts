@@ -287,7 +287,7 @@ class TypeScriptValidatorService {
         file: 'src/services/profileSync.ts',
         line: 100,
         column: 1,
-        message: 'profile_completed field should be boolean',
+        message: 'profile_complete field should be boolean',
         severity: 'WARNING' as const,
         code: 'TS2322',
         category: 'type' as const

@@ -1,4 +1,3 @@
-// Supabase database types - generated from schema
 export interface Database {
   public: {
     Tables: {
@@ -15,8 +14,7 @@ export interface Database {
           instagram: string | null
           twitter: string | null
           role: 'artist' | 'collector' | 'gallery' | 'admin'
-          onboarding_completed: boolean
-          profile_completed: boolean
+          profile_complete: boolean
           created_at: string
           updated_at: string
         }
@@ -32,8 +30,7 @@ export interface Database {
           instagram?: string | null
           twitter?: string | null
           role?: 'artist' | 'collector' | 'gallery' | 'admin'
-          onboarding_completed?: boolean
-          profile_completed?: boolean
+          profile_complete?: boolean
           created_at?: string
           updated_at?: string
         }
@@ -49,8 +46,7 @@ export interface Database {
           instagram?: string | null
           twitter?: string | null
           role?: 'artist' | 'collector' | 'gallery' | 'admin'
-          onboarding_completed?: boolean
-          profile_completed?: boolean
+          profile_complete?: boolean
           created_at?: string
           updated_at?: string
         }

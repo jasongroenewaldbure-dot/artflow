@@ -3,7 +3,7 @@ import { Helmet } from 'react-helmet-async'
 import { Bell, Search, Filter, Check, X, Eye, Heart, ShoppingBag, MessageSquare, Calendar, Settings, Trash2 } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../contexts/AuthProvider'
-import Container from "../../components/common/Container"
+import Container from "../brush/components/forms/Container"
 import { showErrorToast, showSuccessToast } from '../../utils/errorHandling'
 
 interface Notification {

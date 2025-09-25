@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
-import Icon from '@/components/icons/Icon';
+import Icon from "../brush/Icon";
 import toast from 'react-hot-toast';
 
 // --- DATABASE HELPER ---

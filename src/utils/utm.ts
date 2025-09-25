@@ -39,4 +39,3 @@ export function maybePersistFirstTouch(utm: UTM) {
     }
   } catch {}
 }
-

@@ -37,8 +37,7 @@ export interface Profile {
   instagram?: string
   twitter?: string
   role: 'artist' | 'collector' | 'gallery' | 'admin'
-  onboarding_completed: boolean
-  profile_completed: boolean
+  profile_complete: boolean
   created_at: string
   updated_at: string
 }

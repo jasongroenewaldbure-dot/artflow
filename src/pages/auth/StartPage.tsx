@@ -5,7 +5,7 @@ import { Mail, Lock, ArrowRight, CheckCircle, AlertCircle, Eye, EyeOff, Apple, S
 import { useAuth } from '../../contexts/AuthProvider'
 import { supabase } from '../../lib/supabase'
 import toast from 'react-hot-toast'
-import LoadingSpinner from "../../components/common/LoadingSpinner"
+import LoadingSpinner from "../../brush/components/feedback/LoadingSpinner"
 
 const StartPage: React.FC = () => {
   const [email, setEmail] = useState('')
@@ -114,7 +114,7 @@ const StartPage: React.FC = () => {
         const { data: profile } = await supabase
           .from('profiles')
           .select('role')
-          .eq('id', result.user.id)
+          .eq('user_id', result.user.id)
           .single()
         
         if (!profile) {
@@ -147,7 +147,7 @@ const StartPage: React.FC = () => {
             .update({ 
               role: role.toUpperCase()
             })
-            .eq('id', user.id)
+            .eq('user_id', user.id)
           
           if (error) throw error
           
@@ -276,7 +276,7 @@ const StartPage: React.FC = () => {
   return (
     <div style={{
       minHeight: '100vh',
-      background: 'linear-gradient(135deg, var(--bg) 0%, var(--bg-alt) 100%)',
+      background: '#ffffff', /* Artsy White Background */
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
@@ -289,14 +289,14 @@ const StartPage: React.FC = () => {
         <meta name="description" content="Join ArtFlow to discover, buy, and sell art. Sign up or sign in to get started." />
       </Helmet>
 
-      {/* Background Pattern */}
+      {/* Artsy Background Pattern */}
       <div style={{
         position: 'absolute',
         top: 0,
         left: 0,
         right: 0,
         bottom: 0,
-        backgroundImage: 'radial-gradient(circle at 25% 25%, rgba(110, 31, 255, 0.1) 0%, transparent 50%), radial-gradient(circle at 75% 75%, rgba(16, 185, 129, 0.1) 0%, transparent 50%)',
+        backgroundImage: 'radial-gradient(circle at 25% 25%, rgba(110, 30, 255, 0.03) 0%, transparent 50%), radial-gradient(circle at 75% 75%, rgba(0, 0, 0, 0.02) 0%, transparent 50%)',
         pointerEvents: 'none'
       }} />
 

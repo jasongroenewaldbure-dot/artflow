@@ -1,7 +1,3 @@
-/**
- * Slug utility functions for generating and handling friendly URLs
- */
-
 export function generateSlug(text: string): string {
   return text
     .toLowerCase()

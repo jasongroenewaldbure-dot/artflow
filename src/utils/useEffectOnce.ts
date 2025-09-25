@@ -8,4 +8,3 @@ export function useEffectOnce(effect: () => void | (() => void)) {
     return effect()
   }, [])
 }
-

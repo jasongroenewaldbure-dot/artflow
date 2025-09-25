@@ -18,9 +18,9 @@ import {
   AlertCircle
 } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
-import LoadingSpinner from "../components/common/LoadingSpinner"
-import ErrorMessage from "../components/common/ErrorMessage"
-import Container from "../components/common/Container"
+import LoadingSpinner from "../brush/components/feedback/LoadingSpinner"
+import ErrorMessage from "../brush/components/forms/ErrorMessage"
+import Container from "../brush/components/forms/Container"
 import { useAuth } from '@/contexts/AuthProvider'
 import toast from 'react-hot-toast'
 

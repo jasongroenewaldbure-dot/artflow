@@ -4,8 +4,8 @@ import { useQuery } from '@tanstack/react-query'
 import { useParams, Link, useNavigate, useLocation } from 'react-router-dom'
 import { ArrowLeft, MapPin, BadgeCheck, Heart, Eye, Share2, ExternalLink } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
-import LoadingSpinner from "../../components/common/LoadingSpinner"
-import Container from "../../components/common/Container"
+import LoadingSpinner from "../../brush/components/feedback/LoadingSpinner"
+import Container from "../../brush/components/forms/Container"
 import { useAuth } from '@/contexts/AuthProvider'
 import toast from 'react-hot-toast'
 

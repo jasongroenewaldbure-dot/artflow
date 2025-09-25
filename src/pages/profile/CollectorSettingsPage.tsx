@@ -8,7 +8,7 @@ import {
 } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../contexts/AuthProvider'
-import Container from '../../components/common/Container'
+import Container from "../brush/components/forms/Container'
 import LivePreferenceControls, { LivePreferences } from '../../components/common/LivePreferenceControls'
 import { showErrorToast, showSuccessToast } from '../../utils/errorHandling'
 
@@ -92,7 +92,7 @@ const CollectorSettingsPage: React.FC = () => {
       const { data: profileData } = await supabase
         .from('profiles')
         .select('*')
-        .eq('id', user?.id)
+        .eq('user_id', user?.id)
         .single()
 
       // Load AI learnings
@@ -136,7 +136,7 @@ const CollectorSettingsPage: React.FC = () => {
       await supabase
         .from('profiles')
         .update(updates)
-        .eq('id', user?.id)
+        .eq('user_id', user?.id)
 
       await updateProfile(updates)
       setCollectorProfile(prev => prev ? { ...prev, ...updates } : null)
