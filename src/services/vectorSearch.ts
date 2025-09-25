@@ -33,10 +33,8 @@ class VectorSearchService {
   // Generate embedding for text content
   async generateEmbedding(text: string): Promise<number[]> {
     try {
-      // In production, this would call OpenAI's embedding API
-      // For now, we'll generate a mock embedding
-      const mockEmbedding = Array.from({ length: this.embeddingDimensions }, () => Math.random())
-      return this.normalizeVector(mockEmbedding)
+      // TODO: Implement real embedding generation using OpenAI's embedding API
+      return new Array(this.embeddingDimensions).fill(0)
     } catch (error) {
       console.error('Error generating embedding:', error)
       throw error

@@ -378,18 +378,64 @@ class Contact360Service {
   }
 
   private async getSessionData(contactId: string): Promise<{ averageDuration: number, bounceRate: number }> {
-    // This would typically come from analytics data
-    // For now, return mock data
-    return {
-      averageDuration: 180, // 3 minutes
-      bounceRate: 0.3 // 30%
-    };
+    try {
+      const { data: sessionData, error } = await supabase
+        .from('user_sessions')
+        .select('duration, is_bounce')
+        .eq('contact_id', contactId)
+        .gte('created_at', new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString()) // Last 30 days
+
+      if (error) {
+        console.error('Error fetching session data:', error)
+        return { averageDuration: 0, bounceRate: 0 }
+      }
+
+      if (!sessionData || sessionData.length === 0) {
+        return { averageDuration: 0, bounceRate: 0 }
+      }
+
+      const totalDuration = sessionData.reduce((sum, session) => sum + (session.duration || 0), 0)
+      const averageDuration = totalDuration / sessionData.length
+      const bounceCount = sessionData.filter(session => session.is_bounce).length
+      const bounceRate = bounceCount / sessionData.length
+
+      return { averageDuration, bounceRate }
+    } catch (error) {
+      console.error('Error in getSessionData:', error)
+      return { averageDuration: 0, bounceRate: 0 }
+    }
   }
 
   private async calculateSegmentSize(userId: string, criteria: any): Promise<number> {
-    // This would calculate how many contacts match the criteria
-    // For now, return a mock value
-    return Math.floor(Math.random() * 100);
+    try {
+      let query = supabase
+        .from('contacts')
+        .select('id', { count: 'exact' })
+        .eq('user_id', userId)
+
+      // Apply criteria filters
+      if (criteria.role) {
+        query = query.eq('role', criteria.role)
+      }
+      if (criteria.location) {
+        query = query.eq('location', criteria.location)
+      }
+      if (criteria.interests && criteria.interests.length > 0) {
+        query = query.overlaps('interests', criteria.interests)
+      }
+
+      const { count, error } = await query
+
+      if (error) {
+        console.error('Error calculating segment size:', error)
+        return 0
+      }
+
+      return count || 0
+    } catch (error) {
+      console.error('Error in calculateSegmentSize:', error)
+      return 0
+    }
   }
 }
 

@@ -335,45 +335,48 @@ const HomePage: React.FC = () => {
   }
 
   const loadCommunityLists = async (): Promise<CommunityList[]> => {
-    // Mock community lists for now
-    return [
-      {
-        id: '1',
-        title: 'Abstract Expressionism Favorites',
-        description: 'A collection of powerful abstract works',
-        curator: {
-          full_name: 'Sarah Chen',
-          avatar_url: 'https://placehold.co/40x40'
-        },
-        artwork_count: 15,
-        likes_count: 234,
-        is_public: true
-      },
-      {
-        id: '2',
-        title: 'Emerging South African Artists',
-        description: 'Discovering new talent from South Africa',
-        curator: {
-          full_name: 'Michael Johnson',
-          avatar_url: 'https://placehold.co/40x40'
-        },
-        artwork_count: 22,
-        likes_count: 189,
-        is_public: true
-      },
-      {
-        id: '3',
-        title: 'Minimalist Masterpieces',
-        description: 'Less is more - beautiful minimalist art',
-        curator: {
-          full_name: 'Emma Rodriguez',
-          avatar_url: 'https://placehold.co/40x40'
-        },
-        artwork_count: 18,
-        likes_count: 156,
-        is_public: true
+    try {
+      // Fetch real community lists from the database
+      const { data: listsData, error } = await supabase
+        .from('community_lists')
+        .select(`
+          *,
+          profiles!community_lists_curator_id_fkey(
+            id,
+            full_name,
+            display_name,
+            avatar_url
+          )
+        `)
+        .eq('is_public', true)
+        .order('created_at', { ascending: false })
+        .limit(10)
+
+      if (error) {
+        if (error.code === 'PGRST116') {
+          // Table doesn't exist yet, return empty array
+          return []
+        }
+        console.error('Error fetching community lists:', error)
+        return []
       }
-    ]
+
+      return (listsData || []).map(list => ({
+        id: list.id,
+        title: list.title,
+        description: list.description,
+        curator: {
+          full_name: list.profiles?.full_name || list.profiles?.display_name || 'Unknown Curator',
+          avatar_url: list.profiles?.avatar_url
+        },
+        artwork_count: list.artwork_count || 0,
+        likes_count: list.likes_count || 0,
+        is_public: list.is_public
+      }))
+    } catch (error) {
+      console.error('Error loading community lists:', error)
+      return []
+    }
   }
 
   const formatPrice = (price: number, currency: string = 'USD') => {

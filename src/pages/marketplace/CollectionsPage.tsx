@@ -41,66 +41,54 @@ const CataloguesPage: React.FC = () => {
     const loadCollections = async () => {
       try {
         setLoading(true)
-        // Mock data - replace with actual API call
-        const mockCollections: Catalogue[] = [
-          {
-            id: '1',
-            name: 'Contemporary Abstract Art',
-            slug: 'contemporary-abstract-art',
-            description: 'A curated collection of contemporary abstract artworks from emerging and established artists.',
-            coverImageUrl: '/api/placeholder/400/300',
-            artworkCount: 24,
-            artist: {
-              id: '1',
-              name: 'Sarah Johnson',
-              avatarUrl: '/api/placeholder/40/40'
-            },
-            tags: ['abstract', 'contemporary', 'modern'],
-            isPublic: true,
-            isFollowed: false,
-            createdAt: '2024-01-15T10:00:00Z',
-            updatedAt: '2024-01-20T15:30:00Z'
+        // Fetch real collections data from the database
+        const { data: collectionsData, error } = await supabase
+          .from('catalogues')
+          .select(`
+            *,
+            profiles!catalogues_user_id_fkey(
+              id,
+              full_name,
+              display_name,
+              avatar_url
+            ),
+            artworks!catalogue_artworks(
+              id,
+              title,
+              primary_image_url,
+              status
+            )
+          `)
+          .eq('is_public', true)
+          .order('created_at', { ascending: false })
+
+        if (error) {
+          console.error('Error fetching collections:', error)
+          setError('Failed to load collections')
+          return
+        }
+
+        const formattedCollections: Catalogue[] = (collectionsData || []).map(catalogue => ({
+          id: catalogue.id,
+          name: catalogue.name,
+          slug: catalogue.slug,
+          description: catalogue.description,
+          coverImageUrl: catalogue.cover_image_url,
+          artworkCount: catalogue.artworks?.filter((artwork: any) => artwork.status === 'available').length || 0,
+          artist: {
+            id: catalogue.profiles?.id || '',
+            name: catalogue.profiles?.full_name || catalogue.profiles?.display_name || 'Unknown Artist',
+            avatarUrl: catalogue.profiles?.avatar_url
           },
-          {
-            id: '2',
-            name: 'Digital Art Revolution',
-            slug: 'digital-art-revolution',
-            description: 'Exploring the intersection of technology and creativity in modern digital art.',
-            coverImageUrl: '/api/placeholder/400/300',
-            artworkCount: 18,
-            artist: {
-              id: '2',
-              name: 'Alex Chen',
-              avatarUrl: '/api/placeholder/40/40'
-            },
-            tags: ['digital', 'technology', 'innovation'],
-            isPublic: true,
-            isFollowed: true,
-            createdAt: '2024-01-10T14:20:00Z',
-            updatedAt: '2024-01-18T09:15:00Z'
-          },
-          {
-            id: '3',
-            name: 'Minimalist Expressions',
-            slug: 'minimalist-expressions',
-            description: 'The beauty of simplicity in contemporary minimalist art.',
-            coverImageUrl: '/api/placeholder/400/300',
-            artworkCount: 32,
-            artist: {
-              id: '3',
-              name: 'Maria Rodriguez',
-              avatarUrl: '/api/placeholder/40/40'
-            },
-            tags: ['minimalist', 'simplicity', 'contemporary'],
-            isPublic: true,
-            isFollowed: false,
-            createdAt: '2024-01-05T16:45:00Z',
-            updatedAt: '2024-01-22T11:20:00Z'
-          }
-        ]
-        
-        setCatalogues(mockCollections)
-        setFilteredCatalogues(mockCollections)
+          tags: catalogue.tags || [],
+          isPublic: catalogue.is_public,
+          isFollowed: false, // TODO: Check if current user follows this collection
+          createdAt: catalogue.created_at,
+          updatedAt: catalogue.updated_at
+        }))
+
+        setCatalogues(formattedCollections)
+        setFilteredCatalogues(formattedCollections)
       } catch (e: any) {
         setError(e.message || 'Failed to load collections')
       } finally {

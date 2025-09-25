@@ -180,29 +180,18 @@ class MediaPipelineService {
   }
 
   private async extractExifData(file: File): Promise<any> {
-    // This would use a library like exifr to extract EXIF data
-    // For now, return mock data
-    return {
-      camera: 'Canon EOS R5',
-      lens: '24-70mm f/2.8',
-      iso: 100,
-      aperture: 'f/2.8',
-      shutterSpeed: '1/125',
-      focalLength: '50mm',
-      dateTaken: new Date().toISOString()
-    };
+    // TODO: Implement real EXIF data extraction using exifr library
+    return {};
   }
 
   private async generatePerceptualHash(file: File): Promise<string> {
-    // This would use a library like imghash to generate perceptual hash
-    // For now, return a mock hash
-    return `phash_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    // TODO: Implement real perceptual hash generation using imghash library
+    return '';
   }
 
   private async extractDominantColors(file: File): Promise<string[]> {
-    // This would use a library like color-thief or similar
-    // For now, return mock colors
-    return ['#3B82F6', '#EF4444', '#10B981', '#F59E0B', '#8B5CF6'];
+    // TODO: Implement real color extraction using color-thief or similar library
+    return [];
   }
 
   private async generateWatermark(
@@ -211,38 +200,31 @@ class MediaPipelineService {
     artistName: string,
     originalUrl?: string
   ): Promise<string> {
-    // This would use a library like sharp or canvas to add watermark
-    // For now, return a mock URL
-    const watermarkedFileName = `wm_${artworkId}_${Date.now()}.jpg`;
-    return `https://storage.supabase.co/artwork-images/watermarked/${watermarkedFileName}`;
+    // TODO: Implement real watermark generation using sharp or canvas library
+    return '';
   }
 
   private async generateVisualization(file: File, artworkId: string): Promise<string> {
-    // This would use the room visualization service
-    // For now, return a mock URL
-    const visualizationFileName = `vis_${artworkId}_${Date.now()}.jpg`;
-    return `https://storage.supabase.co/artwork-images/visualizations/${visualizationFileName}`;
+    // TODO: Implement real room visualization service
+    return '';
   }
 
   private async extractAITags(file: File): Promise<{ subjectTags: string[], genreTags: string[] }> {
-    // This would use Google Vision API or similar
-    // For now, return mock tags
+    // TODO: Implement real AI tag extraction using Google Vision API or similar
     return {
-      subjectTags: ['Landscape', 'Nature', 'Mountain'],
-      genreTags: ['Fine Art', 'Contemporary']
+      subjectTags: [],
+      genreTags: []
     };
   }
 
   private isHangableMedium(artworkId: string): boolean {
-    // This would check the artwork's medium to determine if it's hangable
-    // For now, return true for all
-    return true;
+    // TODO: Implement real medium checking logic
+    return false;
   }
 
   private calculateHashSimilarity(hash1: string, hash2: string): number {
-    // This would calculate Hamming distance between perceptual hashes
-    // For now, return a mock similarity
-    return Math.random() * 0.5 + 0.5; // 0.5 to 1.0
+    // TODO: Implement real Hamming distance calculation between perceptual hashes
+    return 0;
   }
 }
 

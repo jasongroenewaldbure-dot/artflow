@@ -165,7 +165,7 @@ const WaitlistPage = () => {
                     </ul>
                 </>
             ),
-            imageUrl: '/mockups/elegant-catalogue-builder.png',
+            imageUrl: '',
         },
         {
             id: 'artist-understand',
@@ -181,7 +181,7 @@ const WaitlistPage = () => {
                     </ul>
                 </>
             ),
-            imageUrl: '/mockups/artist-insights-dashboard.png',
+            imageUrl: '',
         },
         {
             id: 'artist-manage',
@@ -197,7 +197,7 @@ const WaitlistPage = () => {
                     </ul>
                 </>
             ),
-            imageUrl: '/mockups/press-kit-generator.png',
+            imageUrl: '',
         },
         {
             id: 'artist-connect',
@@ -213,7 +213,7 @@ const WaitlistPage = () => {
                     </ul>
                 </>
             ),
-            imageUrl: '/mockups/opportunities-widget.png',
+            imageUrl: '',
         },
     ];
 
@@ -232,7 +232,7 @@ const WaitlistPage = () => {
                     </ul>
                 </>
             ),
-            imageUrl: '/mockups/ai-concierge-search.png',
+            imageUrl: '',
         },
         {
             id: 'collector-strategy',

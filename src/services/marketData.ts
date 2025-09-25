@@ -1,4 +1,5 @@
 import { supabase } from '../lib/supabase'
+import { externalDataScrapers } from './externalDataScrapers'
 
 // Art market data interfaces
 export interface ArtMarketTrend {
@@ -2083,21 +2084,33 @@ class MarketDataService {
     }
   }
 
-  private async searchGalleryRepresentations(_artistName: string): Promise<string[]> {
-    // Simulate gallery search using web scraping
-    // In real implementation, scrape gallery websites, art databases
-    const mockGalleries = [
-      'Gagosian Gallery',
-      'David Zwirner',
-      'Hauser & Wirth',
-      'Pace Gallery',
-      'White Cube',
-      'Sprüth Magers',
-      'Galerie Perrotin',
-      'Marian Goodman Gallery'
-    ]
-    
-    return mockGalleries.slice(0, Math.floor(Math.random() * 4))
+  private async searchGalleryRepresentations(artistName: string): Promise<string[]> {
+    try {
+      // First check our database for existing data
+      const { data: galleryData, error } = await supabase
+        .from('gallery_representations')
+        .select('gallery_name')
+        .eq('artist_name', artistName)
+        .eq('is_active', true)
+
+      if (error) {
+        console.error('Error fetching gallery representations:', error)
+      }
+
+      let galleryNames = galleryData?.map(item => item.gallery_name) || []
+
+      // If no data found or data is stale, scrape external sources
+      if (galleryNames.length === 0) {
+        console.log(`No gallery representations found for ${artistName}, scraping external sources...`)
+        const representations = await externalDataScrapers.scrapeGalleryRepresentations(artistName)
+        galleryNames = representations.map(rep => rep.gallery_name)
+      }
+
+      return galleryNames
+    } catch (error) {
+      console.error('Error in searchGalleryRepresentations:', error)
+      return []
+    }
   }
 
   private async analyzeAuctionHousePresence(artistName: string): Promise<number> {
@@ -2112,20 +2125,33 @@ class MarketDataService {
   }
 
   private async searchAuctionResults(artistName: string): Promise<any[]> {
-    // Simulate auction house search
-    // In real implementation, use APIs like:
-    // - Christie's API
-    // - Sotheby's API
-    // - Phillips API
-    // - Artnet API
-    
-    const mockResults = [
-      { price: 50000, date: '2024-01-15', house: 'Christie\'s' },
-      { price: 75000, date: '2023-11-20', house: 'Sotheby\'s' },
-      { price: 30000, date: '2023-09-10', house: 'Phillips' }
-    ]
-    
-    return mockResults.slice(0, Math.floor(Math.random() * 3))
+    try {
+      // First check our database for existing data
+      const { data: auctionData, error } = await supabase
+        .from('auction_results')
+        .select('*')
+        .eq('artist_name', artistName)
+        .order('sale_date', { ascending: false })
+        .limit(50)
+
+      if (error) {
+        console.error('Error fetching auction results:', error)
+      }
+
+      let results = auctionData || []
+
+      // If no data found or data is stale, scrape external sources
+      if (results.length === 0) {
+        console.log(`No auction results found for ${artistName}, scraping external sources...`)
+        const externalResults = await externalDataScrapers.scrapeAllExternalData(artistName)
+        results = externalResults.auctionResults
+      }
+
+      return results
+    } catch (error) {
+      console.error('Error in searchAuctionResults:', error)
+      return []
+    }
   }
 
   private async analyzeArtFairParticipation(artistName: string): Promise<number> {
@@ -2139,20 +2165,33 @@ class MarketDataService {
     }
   }
 
-  private async searchArtFairParticipation(_artistName: string): Promise<string[]> {
-    // Simulate art fair search
-    const mockArtFairs = [
-      'Art Basel',
-      'Frieze London',
-      'Frieze New York',
-      'Art Basel Miami Beach',
-      'TEFAF Maastricht',
-      'Armory Show',
-      'Art Dubai',
-      'Art Basel Hong Kong'
-    ]
-    
-    return mockArtFairs.slice(0, Math.floor(Math.random() * 3))
+  private async searchArtFairParticipation(artistName: string): Promise<string[]> {
+    try {
+      // First check our database for existing data
+      const { data: artFairData, error } = await supabase
+        .from('art_fair_participations')
+        .select('fair_name')
+        .eq('artist_name', artistName)
+        .eq('is_active', true)
+
+      if (error) {
+        console.error('Error fetching art fair participations:', error)
+      }
+
+      let fairNames = artFairData?.map(item => item.fair_name) || []
+
+      // If no data found or data is stale, scrape external sources
+      if (fairNames.length === 0) {
+        console.log(`No art fair participations found for ${artistName}, scraping external sources...`)
+        const participations = await externalDataScrapers.scrapeArtFairParticipation(artistName)
+        fairNames = participations.map(part => part.fair_name)
+      }
+
+      return fairNames
+    } catch (error) {
+      console.error('Error in searchArtFairParticipation:', error)
+      return []
+    }
   }
 
   private async analyzePressCoverage(artistName: string): Promise<number> {
@@ -2179,14 +2218,32 @@ class MarketDataService {
       console.error('News API error:', error)
     }
     
-    // Fallback to mock data
-    const mockArticles = [
-      { title: 'Artist Profile: Rising Star in Contemporary Art', source: 'Artnet' },
-      { title: 'Exhibition Review: Innovative Techniques', source: 'Artforum' },
-      { title: 'Market Analysis: Emerging Artist Trends', source: 'Artsy' }
-    ]
-    
-    return mockArticles.slice(0, Math.floor(Math.random() * 3))
+    // Fallback to database search for press coverage
+    try {
+      const { data: pressData, error } = await supabase
+        .from('press_coverage')
+        .select('*')
+        .eq('artist_name', artistName)
+        .order('published_at', { ascending: false })
+        .limit(20)
+
+      if (error) {
+        console.error('Error fetching press coverage:', error)
+      }
+
+      let articles = pressData || []
+
+      // If no data found or data is stale, scrape external sources
+      if (articles.length === 0) {
+        console.log(`No press coverage found for ${artistName}, scraping external sources...`)
+        articles = await externalDataScrapers.scrapePressCoverage(artistName)
+      }
+
+      return articles
+    } catch (error) {
+      console.error('Error in press coverage fallback:', error)
+      return []
+    }
   }
 
   private async analyzeExhibitions(artistName: string, _location?: string): Promise<{
@@ -3075,37 +3132,40 @@ class MarketDataService {
 
   private async getMarketComparableArtworks(factors: PricingFactors): Promise<any[]> {
     try {
-      // Simulate external market data search
-      // In real implementation, this would query external APIs like:
-      // - Artsy API
-      // - Artnet API
-      // - Auction house APIs
-      // - Gallery APIs
-      
-      const mockComparables = [
-        {
-          id: 'ext_1',
-          title: 'Similar Artwork 1',
-          medium: factors.medium,
-          dimensions: factors.dimensions,
-          price_cents: Math.floor(Math.random() * 500000) + 100000,
-          artist_name: 'Comparable Artist 1',
-          created_at: new Date().toISOString(),
-          source: 'Artsy'
-        },
-        {
-          id: 'ext_2', 
-          title: 'Similar Artwork 2',
-          medium: factors.medium,
-          dimensions: factors.dimensions,
-          price_cents: Math.floor(Math.random() * 300000) + 50000,
-          artist_name: 'Comparable Artist 2',
-          created_at: new Date().toISOString(),
-          source: 'Artnet'
-        }
-      ]
-      
-      return mockComparables
+      // Search for comparable artworks in our database
+      const { data: comparableData, error } = await supabase
+        .from('artworks')
+        .select(`
+          id,
+          title,
+          medium,
+          dimensions,
+          price_cents,
+          profiles!artworks_user_id_fkey(full_name),
+          created_at
+        `)
+        .eq('medium', factors.medium)
+        .eq('status', 'available')
+        .gte('price_cents', factors.priceRange?.min * 100 || 0)
+        .lte('price_cents', factors.priceRange?.max * 100 || 999999999)
+        .order('created_at', { ascending: false })
+        .limit(20)
+
+      if (error) {
+        console.error('Error fetching comparable artworks:', error)
+        return []
+      }
+
+      return (comparableData || []).map(artwork => ({
+        id: artwork.id,
+        title: artwork.title,
+        medium: artwork.medium,
+        dimensions: artwork.dimensions,
+        price_cents: artwork.price_cents,
+        artist_name: artwork.profiles?.full_name || 'Unknown Artist',
+        created_at: artwork.created_at,
+        source: 'Internal Database'
+      }))
     } catch (error) {
       console.error('Error fetching market comparable artworks:', error)
       return []

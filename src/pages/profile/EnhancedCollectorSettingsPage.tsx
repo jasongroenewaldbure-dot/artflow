@@ -4,7 +4,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Helmet } from 'react-helmet-async';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthProvider';
-import Container from "../brush/components/forms/Container';
+import Container from "../brush/components/forms/Container";
 import Toggle from '../../components/common/Toggle';
 import LivePreferenceControls, { LivePreferences } from '../../components/common/LivePreferenceControls';
 import { 

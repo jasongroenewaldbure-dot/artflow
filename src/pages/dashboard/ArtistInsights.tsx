@@ -138,45 +138,84 @@ const ArtistInsights: React.FC<ArtistInsightsProps> = ({ artistId }) => {
   const loadInsights = async () => {
     try {
       setLoading(true)
-      // Mock data for now - replace with actual API call
-      const mockInsights = {
-        artist_id: artistId,
-        period,
-        metrics: {
-          total_views: 15420,
-          unique_viewers: 3240,
-          page_views: 18750,
-          artwork_views: 12300,
-          catalogue_views: 2100,
-          profile_views: 4350,
-          likes: 890,
-          shares: 234,
-          saves: 156,
-          follows: 78,
-          unfollows: 12,
-          inquiries: 45,
-          conversations: 23,
-          total_sales: 8,
-          revenue: 45600,
-          average_sale_price: 5700,
-          conversion_rate: 2.1,
-          engagement_rate: 8.5,
-          reach: 8900,
-          impressions: 25600,
-          click_through_rate: 3.2,
-          bounce_rate: 42.1,
-          session_duration: 180,
-          pages_per_session: 2.3,
-          follower_growth: 12.5,
-          artwork_growth: 8.2,
-          revenue_growth: 23.4,
-          view_growth: 15.7
-        },
-        generated_at: new Date().toISOString()
+      
+      // Fetch real insights data from the database
+      const { data: insightsData, error } = await supabase
+        .from('artist_insights')
+        .select(`
+          *,
+          artworks!artworks_user_id_fkey(
+            id,
+            title,
+            price,
+            status,
+            created_at,
+            artwork_metrics(*)
+          )
+        `)
+        .eq('artist_id', artistId)
+        .eq('period', period)
+        .single()
+
+      if (error) {
+        if (error.code === 'PGRST116') {
+          // No insights data yet, create initial record
+          const { data: newInsights, error: createError } = await supabase
+            .from('artist_insights')
+            .insert([{
+              artist_id: artistId,
+              period: period,
+              metrics: {
+                total_views: 0,
+                unique_viewers: 0,
+                page_views: 0,
+                artwork_views: 0,
+                catalogue_views: 0,
+                profile_views: 0,
+                likes: 0,
+                shares: 0,
+                saves: 0,
+                follows: 0,
+                unfollows: 0,
+                inquiries: 0,
+                conversations: 0,
+                total_sales: 0,
+                revenue: 0,
+                average_sale_price: 0,
+                conversion_rate: 0,
+                engagement_rate: 0,
+                reach: 0,
+                impressions: 0,
+                click_through_rate: 0,
+                bounce_rate: 0,
+                session_duration: 0,
+                pages_per_session: 0,
+                follower_growth: 0,
+                artwork_growth: 0,
+                revenue_growth: 0,
+                view_growth: 0
+              },
+              generated_at: new Date().toISOString()
+            }])
+            .select()
+            .single()
+
+          if (createError) {
+            console.error('Error creating insights:', createError)
+            setInsights(null)
+            return
+          }
+          
+          setInsights(newInsights)
+          return
+        }
+        throw error
       }
-      setInsights(mockInsights)
+
+      setInsights(insightsData)
     } catch (error) {
       console.error('Error loading insights:', error)
+      setInsights(null)
     } finally {
       setLoading(false)
     }

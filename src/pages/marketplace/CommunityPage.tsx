@@ -50,75 +50,58 @@ const CommunityPage: React.FC = () => {
   const loadCommunityCurations = async () => {
     try {
       setLoading(true)
-      // This would fetch from a community_curations table or similar
-      // For now, we'll create mock data that represents public lists from collectors/artists
-      const mockCurations: CommunityCuration[] = [
-        {
-          id: '1',
-          title: 'Emerging Contemporary Artists',
-          description: 'A carefully curated selection of emerging contemporary artists whose work shows exceptional promise and innovation.',
-          curator: {
-            id: '1',
-            name: 'Sarah Chen',
-            avatar_url: '/api/placeholder/40/40',
-            role: 'collector'
-          },
-          items: [
-            { id: '1', type: 'artist', title: 'Maya Rodriguez', image_url: '/api/placeholder/200/200' },
-            { id: '2', type: 'artwork', title: 'Abstract No. 7', image_url: '/api/placeholder/200/200', artist_name: 'Alex Kim' },
-            { id: '3', type: 'artist', title: 'Elena Volkov', image_url: '/api/placeholder/200/200' }
-          ],
-          is_public: true,
-          created_at: '2024-01-15T10:00:00Z',
-          updated_at: '2024-01-20T15:30:00Z',
-          likes_count: 42,
-          views_count: 128
-        },
-        {
-          id: '2',
-          title: 'Minimalist Masterpieces',
-          description: 'Exploring the beauty of minimalism in contemporary art, featuring works that embrace simplicity and restraint.',
-          curator: {
-            id: '2',
-            name: 'David Park',
-            avatar_url: '/api/placeholder/40/40',
-            role: 'artist'
-          },
-          items: [
-            { id: '4', type: 'artwork', title: 'White on White', image_url: '/api/placeholder/200/200', artist_name: 'David Park' },
-            { id: '5', type: 'artwork', title: 'Untitled', image_url: '/api/placeholder/200/200', artist_name: 'Lisa Chen' },
-            { id: '6', type: 'artwork', title: 'Monochrome Study', image_url: '/api/placeholder/200/200', artist_name: 'James Wilson' }
-          ],
-          is_public: true,
-          created_at: '2024-01-10T14:20:00Z',
-          updated_at: '2024-01-18T09:15:00Z',
-          likes_count: 28,
-          views_count: 95
-        },
-        {
-          id: '3',
-          title: 'Digital Art Revolution',
-          description: 'Showcasing the cutting-edge of digital art and new media, featuring artists pushing the boundaries of technology.',
-          curator: {
-            id: '3',
-            name: 'Maria Santos',
-            avatar_url: '/api/placeholder/40/40',
-            role: 'collector'
-          },
-          items: [
-            { id: '7', type: 'artist', title: 'Neo Digital', image_url: '/api/placeholder/200/200' },
-            { id: '8', type: 'artwork', title: 'Algorithmic Beauty', image_url: '/api/placeholder/200/200', artist_name: 'Tech Artist' },
-            { id: '9', type: 'artwork', title: 'Virtual Reality', image_url: '/api/placeholder/200/200', artist_name: 'VR Creator' }
-          ],
-          is_public: true,
-          created_at: '2024-01-05T16:45:00Z',
-          updated_at: '2024-01-22T11:20:00Z',
-          likes_count: 67,
-          views_count: 203
+      // Fetch real community curations from the database
+      const { data: curationsData, error } = await supabase
+        .from('community_curations')
+        .select(`
+          *,
+          profiles!community_curations_curator_id_fkey(
+            id,
+            full_name,
+            display_name,
+            avatar_url,
+            role
+          ),
+          curation_items(
+            id,
+            type,
+            title,
+            image_url,
+            artist_name
+          )
+        `)
+        .eq('is_public', true)
+        .order('created_at', { ascending: false })
+
+      if (error) {
+        if (error.code === 'PGRST116') {
+          // Table doesn't exist yet, show empty state
+          setCurations([])
+          return
         }
-      ]
-      
-      setCurations(mockCurations)
+        console.error('Error fetching community curations:', error)
+        return
+      }
+
+      const formattedCurations: CommunityCuration[] = (curationsData || []).map(curation => ({
+        id: curation.id,
+        title: curation.title,
+        description: curation.description,
+        curator: {
+          id: curation.profiles?.id || '',
+          name: curation.profiles?.full_name || curation.profiles?.display_name || 'Unknown Curator',
+          avatar_url: curation.profiles?.avatar_url,
+          role: curation.profiles?.role || 'collector'
+        },
+        items: curation.curation_items || [],
+        is_public: curation.is_public,
+        created_at: curation.created_at,
+        updated_at: curation.updated_at,
+        likes_count: curation.likes_count || 0,
+        views_count: curation.views_count || 0
+      }))
+
+      setCurations(formattedCurations)
     } catch (error) {
       console.error('Error loading community curations:', error)
     } finally {
