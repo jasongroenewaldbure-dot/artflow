@@ -8,7 +8,7 @@ import {
 } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../contexts/AuthProvider'
-import Container from "../brush/components/forms/Container'
+import Container from "../brush/components/forms/Container"
 import LivePreferenceControls, { LivePreferences } from '../../components/common/LivePreferenceControls'
 import { showErrorToast, showSuccessToast } from '../../utils/errorHandling'
 

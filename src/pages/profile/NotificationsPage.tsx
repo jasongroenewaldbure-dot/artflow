@@ -25,6 +25,18 @@ const NotificationsPage: React.FC = () => {
   const [filterType, setFilterType] = useState<'all' | 'unread' | 'read'>('all')
   const [filteredNotifications, setFilteredNotifications] = useState<Notification[]>([])
 
+  const createNotificationsTable = async () => {
+    try {
+      // Create the user_notifications table if it doesn't exist
+      const { error } = await supabase.rpc('create_notifications_table')
+      if (error) {
+        console.error('Error creating notifications table:', error)
+      }
+    } catch (error) {
+      console.error('Error creating notifications table:', error)
+    }
+  }
+
   useEffect(() => {
     if (user) {
       loadNotifications()
@@ -48,53 +60,34 @@ const NotificationsPage: React.FC = () => {
 
       if (error) {
         if (error.code === 'PGRST116' || error.message.includes('relation "user_notifications" does not exist')) {
-          // Table doesn't exist yet, use mock data
-          const mockNotifications: Notification[] = [
-        {
-          id: '1',
-          type: 'artwork_liked',
-          title: 'Someone liked your artwork',
-          message: 'Sarah Johnson liked your artwork "Sunset Dreams"',
-          data: { artworkId: 'art1', likerName: 'Sarah Johnson' },
-          read: false,
-          createdAt: new Date(Date.now() - 1000 * 60 * 30).toISOString(), // 30 minutes ago
-          actionUrl: '/artwork/sunset-dreams'
-        },
-        {
-          id: '2',
-          type: 'price_drop',
-          title: 'Price drop alert',
-          message: 'The artwork "Ocean Waves" you saved is now 20% off',
-          data: { artworkId: 'art2', oldPrice: 5000, newPrice: 4000 },
-          read: false,
-          createdAt: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(), // 2 hours ago
-          actionUrl: '/artwork/ocean-waves'
-        },
-        {
-          id: '3',
-          type: 'new_message',
-          title: 'New message from collector',
-          message: 'You have a new message about "Mountain View"',
-          data: { conversationId: 'conv1', senderName: 'Mike Chen' },
-          read: true,
-          createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString(), // 1 day ago
-          actionUrl: '/messages/conv1'
-        },
-        {
-          id: '4',
-          type: 'sale_completed',
-          title: 'Sale completed',
-          message: 'Your artwork "City Lights" has been sold for R8,500',
-          data: { artworkId: 'art3', price: 8500 },
-          read: true,
-          createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 2).toISOString(), // 2 days ago
-          actionUrl: '/u/sales'
+          // Table doesn't exist yet, create it and try again
+          await createNotificationsTable()
+          // Retry the query
+          const { data: retryData, error: retryError } = await supabase
+            .from('user_notifications')
+            .select('*')
+            .eq('user_id', user?.id)
+            .order('created_at', { ascending: false })
+          
+          if (retryError) {
+            console.error('Error after creating table:', retryError)
+            setNotifications([])
+            return
+          }
+          
+          const realNotifications: Notification[] = (retryData || []).map(notif => ({
+            id: notif.id,
+            type: notif.type,
+            title: notif.title,
+            message: notif.message,
+            data: notif.data || {},
+            read: notif.read || false,
+            createdAt: notif.created_at,
+            actionUrl: notif.action_url || ''
+          }))
+          setNotifications(realNotifications)
+          return
         }
-      ]
-
-      setNotifications(mockNotifications)
-      return
-    }
     throw error
   }
 
