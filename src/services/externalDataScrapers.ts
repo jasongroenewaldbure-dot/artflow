@@ -1,6 +1,6 @@
 import { supabase } from '../lib/supabase'
 import { webScraper } from './webScraper'
-import { GALLERY_NAMES, ART_FAIR_NAMES, PUBLICATION_NAMES, AUCTION_HOUSE_NAMES, GALLERIES, ART_FAIRS, PUBLICATIONS, AUCTION_HOUSES } from './dataSources'
+import { GALLERY_NAMES, ART_FAIR_NAMES, PUBLICATION_NAMES, GALLERIES, ART_FAIRS, PUBLICATIONS } from './dataSources'
 
 export interface AuctionResult {
   id: string

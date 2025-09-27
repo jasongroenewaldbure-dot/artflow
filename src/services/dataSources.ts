@@ -139,7 +139,7 @@ export const ART_FAIRS = {
   // African Art Fairs
   dakArt: 'https://www.dakart.org',
   artXlagos: 'https://www.artxlagos.com',
-  1_54ContemporaryAfricanArtFair: 'https://www.1-54.com',
+  contemporaryAfricanArtFair: 'https://www.1-54.com',
   artCairo: 'https://www.artcairo.com',
   artMarrakech: 'https://www.artmarrakech.com',
   artAccra: 'https://www.artaccra.com',
