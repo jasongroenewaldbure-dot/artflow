@@ -2,7 +2,7 @@ import React, { createContext, useContext, ReactNode } from 'react'
 import { useLocation } from 'react-router-dom'
 import { useAuth } from '../../../contexts/AuthProvider'
 import PublicHeader from './PublicHeader'
-import Header from '../marketplace/Header'
+import LoggedInLayout from '../layout/LoggedInLayout'
 
 interface NavigationContextType {
   // Add navigation context properties as needed
@@ -22,7 +22,7 @@ const NavigationProvider: React.FC<NavigationProviderProps> = ({ children }) => 
     // Initialize context value
   }
 
-  // Determine which header to show based on route and auth state
+  // Determine which layout to show based on route and auth state
   const isPublicRoute = location.pathname === '/' || 
                        location.pathname.startsWith('/start') ||
                        location.pathname.startsWith('/auth') ||
@@ -31,11 +31,21 @@ const NavigationProvider: React.FC<NavigationProviderProps> = ({ children }) => 
                        location.pathname === '/catalogues' ||
                        location.pathname === '/community'
 
-  const HeaderComponent = (!user || isPublicRoute) ? PublicHeader : Header
+  // If user is logged in and not on a public route, use the logged-in layout
+  if (user && !isPublicRoute) {
+    return (
+      <NavigationContext.Provider value={value}>
+        <LoggedInLayout>
+          {children}
+        </LoggedInLayout>
+      </NavigationContext.Provider>
+    )
+  }
 
+  // Otherwise, use the public header
   return (
     <NavigationContext.Provider value={value}>
-      <HeaderComponent />
+      <PublicHeader />
       {children}
     </NavigationContext.Provider>
   )
