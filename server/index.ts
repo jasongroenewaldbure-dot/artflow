@@ -113,7 +113,7 @@ async function createServer() {
 
   app.use(async (req, res, next) => {
     try {
-      const html = await render(req.originalUrl, (req as express.Request & { cspNonce?: string }).cspNonce);
+      const html = await render(req.originalUrl, (req as express.Request & { cspNonce?: string }).cspNonce || '');
       res.status(200).set({ 'Content-Type': 'text/html' }).end(html);
     } catch (e: unknown) {
       const error = e as Error;

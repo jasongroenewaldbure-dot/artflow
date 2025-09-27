@@ -60,10 +60,10 @@ router.get('/search/intelligent', async (req, res, next) => {
       
       const range = sizeRanges[sizeBias as keyof typeof sizeRanges]
       if (range) {
-        if (range.min_width) supabaseQuery = supabaseQuery.gte('width_cm', range.min_width)
-        if (range.max_width) supabaseQuery = supabaseQuery.lte('width_cm', range.max_width)
-        if (range.min_height) supabaseQuery = supabaseQuery.gte('height_cm', range.min_height)
-        if (range.max_height) supabaseQuery = supabaseQuery.lte('height_cm', range.max_height)
+        if ('min_width' in range && range.min_width) supabaseQuery = supabaseQuery.gte('width_cm', range.min_width)
+        if ('max_width' in range && range.max_width) supabaseQuery = supabaseQuery.lte('width_cm', range.max_width)
+        if ('min_height' in range && range.min_height) supabaseQuery = supabaseQuery.gte('height_cm', range.min_height)
+        if ('max_height' in range && range.max_height) supabaseQuery = supabaseQuery.lte('height_cm', range.max_height)
       }
     }
 
@@ -181,15 +181,15 @@ router.get('/serendipity/price-drops', requireAuth as any, async (req, res, next
         .limit(1)
 
       if (priceHistory && priceHistory.length > 0) {
-        const currentPrice = save.artworks.price
+        const currentPrice = save.artworks[0]?.price
         const savedPrice = priceHistory[0].price
         
-        if (currentPrice < savedPrice) {
+        if (currentPrice && currentPrice < savedPrice) {
           const dropPercentage = Math.round(((savedPrice - currentPrice) / savedPrice) * 100)
           
           priceDrops.push({
-            ...save.artworks,
-            artist_name: save.artworks.profiles?.[0]?.full_name || 'Unknown Artist',
+            ...save.artworks[0],
+            artist_name: save.artworks[0]?.profiles?.[0]?.full_name || 'Unknown Artist',
             price_drop_percentage: dropPercentage,
             original_price: savedPrice,
             current_price: currentPrice,
@@ -288,7 +288,7 @@ router.get('/serendipity/rare-finds', requireAuth as any, async (req, res, next)
 
 router.get('/serendipity/trending', async (req, res, next) => {
   try {
-    const userId = req.query.userId as string
+    // const userId = req.query.userId as string
     
     // Find works with increasing engagement
     const { data: trending } = await supabase.rpc('get_trending_artworks', {
@@ -335,7 +335,7 @@ router.get('/serendipity/color-harmony', requireAuth as any, async (req, res, ne
 
     // Extract dominant colors from saved works
     const savedColors = recentSaves
-      .flatMap(save => save.artworks.dominant_colors || [])
+      .flatMap(save => save.artworks[0]?.dominant_colors || [])
       .filter(Boolean)
 
     if (savedColors.length === 0) return res.json({ items: [] })
@@ -487,7 +487,7 @@ function calculatePriceFit(artworkPrice: number, priceSensitivity: number): numb
   return Math.max(0, 1 - (artworkPrice / maxBudget))
 }
 
-async function generateDynamicCollections(filters: any) {
+async function generateDynamicCollections(_filters: any) {
   // Generate themed collections based on current filters
   const collections = []
   
@@ -515,7 +515,7 @@ async function generateDynamicCollections(filters: any) {
   return collections
 }
 
-async function generateWeightedRecommendations(userId: string, weights: any, userPrefs: any, recentActivity: any) {
+async function generateWeightedRecommendations(_userId: string, _weights: any, _userPrefs: any, _recentActivity: any) {
   // Implementation for weighted recommendation scoring
   return []
 }

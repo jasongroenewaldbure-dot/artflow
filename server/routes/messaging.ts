@@ -20,7 +20,7 @@ router.get('/conversations', requireAuth as any, async (req, res, next) => {
 
 router.get('/conversations/:id/messages', requireAuth as any, async (req, res, next) => {
   try {
-    const userId = await getUserIdFromRequest(req)
+    // const userId = await getUserIdFromRequest(req)
     const id = req.params.id
     const { data, error } = await supabase
       .from('messages')
