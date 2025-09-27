@@ -178,23 +178,57 @@ class LearningLoopsService {
   }
 
   private updatePreferencesFromSignal(preferences: any, signal: any, weightedValue: number): void {
-    const mockPreferences = {
-      mediums: { 'Oil on Canvas': 0.8, 'Acrylic': 0.6, 'Watercolor': 0.4 },
-      styles: { 'Abstract': 0.7, 'Realistic': 0.5, 'Contemporary': 0.6 },
-      colors: { 'Blue': 0.8, 'Red': 0.6, 'Green': 0.4 },
-      priceRanges: { '1000-5000': 0.7, '5000-10000': 0.5 },
-      artists: {},
-      subjects: { 'Landscape': 0.6, 'Portrait': 0.4 },
-      genres: { 'Fine Art': 0.8, 'Photography': 0.3 }
-    };
+    try {
+      // Update preferences based on actual user behavior signals
+      const signalType = signal.type
+      const signalData = signal.data
 
-    for (const [category, values] of Object.entries(mockPreferences)) {
-      for (const [key, value] of Object.entries(values)) {
-        if (!preferences[category][key]) {
-          preferences[category][key] = 0;
-        }
-        preferences[category][key] += value * weightedValue;
+      switch (signalType) {
+        case 'artwork_view':
+          if (signalData.medium) {
+            preferences.mediums[signalData.medium] = (preferences.mediums[signalData.medium] || 0) + weightedValue
+          }
+          if (signalData.genre) {
+            preferences.genres[signalData.genre] = (preferences.genres[signalData.genre] || 0) + weightedValue
+          }
+          if (signalData.colors && signalData.colors.length > 0) {
+            signalData.colors.forEach((color: string) => {
+              preferences.colors[color] = (preferences.colors[color] || 0) + weightedValue
+            })
+          }
+          break
+
+        case 'artwork_like':
+          if (signalData.artist_id) {
+            preferences.artists[signalData.artist_id] = (preferences.artists[signalData.artist_id] || 0) + weightedValue * 2
+          }
+          if (signalData.subject) {
+            preferences.subjects[signalData.subject] = (preferences.subjects[signalData.subject] || 0) + weightedValue * 1.5
+          }
+          break
+
+        case 'price_inquiry':
+          if (signalData.price_range) {
+            preferences.priceRanges[signalData.price_range] = (preferences.priceRanges[signalData.price_range] || 0) + weightedValue * 1.5
+          }
+          break
+
+        case 'search_query':
+          if (signalData.query) {
+            // Extract keywords from search query and update relevant preferences
+            const keywords = signalData.query.toLowerCase().split(' ')
+            keywords.forEach((keyword: string) => {
+              if (keyword.length > 2) {
+                // This could be enhanced with more sophisticated keyword analysis
+                preferences.searchTerms = preferences.searchTerms || {}
+                preferences.searchTerms[keyword] = (preferences.searchTerms[keyword] || 0) + weightedValue * 0.5
+              }
+            })
+          }
+          break
       }
+    } catch (error) {
+      console.error('Error updating preferences from signal:', error)
     }
   }
 
