@@ -17,12 +17,12 @@ import {
   DollarSign,
   Clock,
   CheckCircle,
-  AlertCircle,
+  // AlertCircle,
   Star,
   BarChart3,
   Target,
-  Bell,
-  Settings,
+  // Bell,
+  // Settings,
   Search
 } from 'lucide-react'
 
@@ -193,7 +193,7 @@ export default function Dashboard() {
 
         const { data: profile, error: profileError } = await supabase
           .from('profiles')
-          .select('display_name, full_name, role, created_at')
+          .select('display_name, full_name, role, created_at, password_set, profile_complete')
           .eq('user_id', user.id)
           .single()
 

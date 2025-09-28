@@ -10,13 +10,13 @@ import LoadingSpinner from "../../brush/components/feedback/LoadingSpinner"
 const StartPage: React.FC = () => {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
-  const [step, setStep] = useState<'email' | 'password' | 'role-selection' | 'email-sent' | 'loading'>('email')
+  const [step, setStep] = useState<'email' | 'password' | 'role-selection' | 'email-sent' | 'magic-link-sent' | 'loading'>('email')
   const [error, setError] = useState('')
-  const [userExists, setUserExists] = useState(false)
+  // const [userExists, setUserExists] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
   const [isSignUp, setIsSignUp] = useState(false)
   const [selectedRole, setSelectedRole] = useState<'artist' | 'collector' | 'both' | null>(null)
-  const { signIn, signUp, signInWithMagicLink, user, loading } = useAuth()
+  const { signIn, signUp, user, loading } = useAuth()
   const navigate = useNavigate()
 
   // Redirect logged-in users to dashboard
@@ -92,9 +92,9 @@ const StartPage: React.FC = () => {
       setStep('email-sent')
       toast.success('Check your email for the verification link!')
       
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('StartPage: Error in handleEmailSubmit:', err)
-      setError(err.message || 'Something went wrong')
+      setError((err as { message?: string }).message || 'Something went wrong')
       setStep('email')
     }
   }
@@ -125,8 +125,8 @@ const StartPage: React.FC = () => {
           navigate('/u/dashboard')
         }
       }
-    } catch (err: any) {
-      setError(err.message || 'Invalid password')
+    } catch (err: unknown) {
+      setError((err as { message?: string }).message || 'Invalid password')
       setStep('password')
     }
   }
@@ -137,44 +137,44 @@ const StartPage: React.FC = () => {
       setError('')
       setSelectedRole(role)
       
-      if (userExists) {
-        // Existing verified user without password - complete their profile
-        const { data: { user } } = await supabase.auth.getUser()
-        if (user) {
-          // Update profile with role
-          const { error } = await supabase
-            .from('profiles')
-            .update({ 
-              role: role.toUpperCase()
-            })
-            .eq('user_id', user.id)
-          
-          if (error) throw error
-          
-          // Navigate to onboarding to complete the setup
-          navigate('/onboarding')
-        } else {
-          // User not authenticated, store role and send OTP
-          sessionStorage.setItem('selectedRole', role)
-          
-          const { error } = await supabase.auth.signInWithOtp({
-            email: email.toLowerCase().trim(),
-            options: {
-              shouldCreateUser: true,
-              data: {
-                role: role,
-                source: 'role_selection',
-                timestamp: Date.now()
-              }
-            }
-          })
-          
-          if (error) throw error
-          
-          setStep('email-sent')
-          toast.success('Check your email for the verification link!')
-        }
-      } else {
+      // if (userExists) {
+      //   // Existing verified user without password - complete their profile
+      //   const { data: { user } } = await supabase.auth.getUser()
+      //   if (user) {
+      //     // Update profile with role
+      //     const { error } = await supabase
+      //       .from('profiles')
+      //       .update({ 
+      //         role: role.toUpperCase()
+      //       })
+      //       .eq('user_id', user.id)
+      //     
+      //     if (error) throw error
+      //     
+      //     // Navigate to onboarding to complete the setup
+      //     navigate('/onboarding')
+      //   } else {
+      //     // User not authenticated, store role and send OTP
+      //     sessionStorage.setItem('selectedRole', role)
+      //     
+      //     const { error } = await supabase.auth.signInWithOtp({
+      //       email: email.toLowerCase().trim(),
+      //       options: {
+      //         shouldCreateUser: true,
+      //         data: {
+      //           role: role,
+      //           source: 'role_selection',
+      //           timestamp: Date.now()
+      //         }
+      //       }
+      //     })
+      //     
+      //     if (error) throw error
+      //     
+      //     setStep('email-sent')
+      //     toast.success('Check your email for the verification link!')
+      //   }
+      // } else {
         // New user - store the role and send OTP
         sessionStorage.setItem('selectedRole', role)
         
@@ -193,9 +193,9 @@ const StartPage: React.FC = () => {
         if (error) throw error
         
         navigate(`/verify-otp?email=${encodeURIComponent(email.toLowerCase().trim())}`, { replace: true })
-      }
-    } catch (err: any) {
-      setError(err.message || 'Failed to process role selection')
+      // }
+    } catch (err: unknown) {
+      setError((err as { message?: string }).message || 'Failed to process role selection')
       setStep('role-selection')
     }
   }
@@ -210,8 +210,8 @@ const StartPage: React.FC = () => {
     try {
       await signUp(email, password)
       navigate('/u/dashboard', { replace: true })
-    } catch (err: any) {
-      setError(err.message || 'Something went wrong')
+    } catch (err: unknown) {
+      setError((err as { message?: string }).message || 'Something went wrong')
       setStep('password')
     }
   }
@@ -241,7 +241,7 @@ const StartPage: React.FC = () => {
       }
       
       // OAuth redirect will happen automatically
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error(`OAuth error for ${provider}:`, err)
       setError(`OAuth authentication with ${provider} is not configured. Please use email sign-in instead.`)
       setStep('email')
@@ -409,7 +409,7 @@ const StartPage: React.FC = () => {
                   {ssoProviders.map((provider) => (
                     <button
                       key={provider.id}
-                      onClick={() => handleSSO(provider.id as any)}
+                      onClick={() => handleSSO(provider.id as 'google' | 'apple')}
                       style={{
                         display: 'flex',
                         alignItems: 'center',

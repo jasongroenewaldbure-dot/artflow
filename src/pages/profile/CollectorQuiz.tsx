@@ -3,7 +3,7 @@ import { Helmet } from 'react-helmet-async'
 import { useNavigate } from 'react-router-dom'
 import { Heart, X, RotateCcw, CheckCircle, ArrowRight, Sparkles, Palette, Home, Users, Star } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
-import LoadingSpinner from "../brush/components/feedback/LoadingSpinner"
+import LoadingSpinner from "../../brush/components/feedback/LoadingSpinner"
 import { useAuth } from '@/contexts/AuthProvider'
 import toast from 'react-hot-toast'
 
@@ -85,7 +85,7 @@ const CollectorQuiz: React.FC = () => {
       id: 'style_preferences',
       type: 'style',
       question: 'What art styles do you prefer?',
-      options: ['Abstract', 'Realism', 'Impressionism', 'Contemporary', 'Minimalist', 'Pop Art', 'Surrealism', 'Expressionism', 'Cubism', 'Photorealism'],
+      options: ['Abstract', 'Realism', 'Impressionism', 'Contemporary', 'Minimalist', 'Pop Art', 'Surrealism', 'Expressionism', 'Cubism', 'Photorealism'] as string[],
       required: true
     },
     {
@@ -151,7 +151,7 @@ const CollectorQuiz: React.FC = () => {
         id: artwork.id,
         title: artwork.title,
         image_url: artwork.primary_image_url || artwork.image_url || '',
-        artist_name: artwork.user?.full_name || artwork.user?.display_name || 'Unknown Artist',
+        artist_name: artwork.user?.[0]?.full_name || artwork.user?.[0]?.display_name || 'Unknown Artist',
         medium: artwork.medium || 'Mixed Media',
         year: artwork.year || new Date().getFullYear(),
         price: artwork.price || 0,

@@ -647,7 +647,7 @@ const CollectorVault: React.FC = () => {
                 >
                   <option value="">All Artists</option>
                   {getUniqueValues('artist_name').map(artist => (
-                    <option key={artist} value={artist}>{artist}</option>
+                    <option key={String(artist)} value={String(artist)}>{String(artist)}</option>
                   ))}
                 </select>
               </div>
@@ -669,7 +669,7 @@ const CollectorVault: React.FC = () => {
                 >
                   <option value="">All Mediums</option>
                   {getUniqueValues('medium').map(medium => (
-                    <option key={medium} value={medium}>{medium}</option>
+                    <option key={String(medium)} value={String(medium)}>{String(medium)}</option>
                   ))}
                 </select>
               </div>
@@ -691,7 +691,7 @@ const CollectorVault: React.FC = () => {
                 >
                   <option value="">All Genres</option>
                   {getUniqueValues('genre').map(genre => (
-                    <option key={genre} value={genre}>{genre}</option>
+                    <option key={String(genre)} value={String(genre)}>{String(genre)}</option>
                   ))}
                 </select>
               </div>

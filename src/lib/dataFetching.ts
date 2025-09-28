@@ -11,7 +11,7 @@ import type {
   SearchFilters, 
   SearchResult, 
   PaginatedResponse,
-  ApiResponse 
+  // ApiResponse 
 } from '../types'
 
 // Advanced Query Client Configuration (Artsy-inspired)
@@ -20,9 +20,10 @@ export const createQueryClient = () => new QueryClient({
     queries: {
       staleTime: 5 * 60 * 1000, // 5 minutes
       gcTime: 10 * 60 * 1000, // 10 minutes (formerly cacheTime)
-      retry: (failureCount, error: any) => {
+      retry: (failureCount, error: unknown) => {
         // Don't retry on 4xx errors
-        if (error?.status >= 400 && error?.status < 500) {
+        const errorWithStatus = error as { status?: number }
+        if (errorWithStatus?.status && errorWithStatus.status >= 400 && errorWithStatus.status < 500) {
           return false
         }
         return failureCount < 3
@@ -31,8 +32,8 @@ export const createQueryClient = () => new QueryClient({
     },
     mutations: {
       retry: 1,
-      onError: (error: any) => {
-        logger.error('Mutation failed', error)
+      onError: (error: unknown) => {
+        logger.error('Mutation failed', error instanceof Error ? error : new Error(String(error)))
       },
     },
   },
@@ -59,7 +60,7 @@ export const queryKeys = {
 // Advanced Data Fetchers with Error Handling
 class DataFetcher {
   private static instance: DataFetcher
-  private cache = new Map<string, { data: any; timestamp: number }>()
+  private cache = new Map<string, { data: unknown; timestamp: number }>()
   private readonly CACHE_TTL = 5 * 60 * 1000 // 5 minutes
 
   static getInstance(): DataFetcher {
@@ -77,7 +78,7 @@ class DataFetcher {
     const cached = this.cache.get(key)
     if (cached && Date.now() - cached.timestamp < ttl) {
       logger.debug('Cache hit', { key })
-      return cached.data
+      return cached.data as T
     }
 
     try {
@@ -257,7 +258,7 @@ class DataFetcher {
     })
   }
 
-  private async generateFacets(filters: SearchFilters) {
+  private async generateFacets(_filters: SearchFilters) {
     // Get aggregated data for faceting
     const { data: mediumFacets } = await supabase
       .from('artworks')
@@ -270,12 +271,12 @@ class DataFetcher {
       .neq('style', null)
 
     // Count occurrences
-    const mediumCounts = mediumFacets?.reduce((acc: Record<string, number>, item: any) => {
+    const mediumCounts = mediumFacets?.reduce((acc: Record<string, number>, item: { medium: string }) => {
       acc[item.medium] = (acc[item.medium] || 0) + 1
       return acc
     }, {}) || {}
 
-    const styleCounts = styleFacets?.reduce((acc: Record<string, number>, item: any) => {
+    const styleCounts = styleFacets?.reduce((acc: Record<string, number>, item: { style: string }) => {
       acc[item.style] = (acc[item.style] || 0) + 1
       return acc
     }, {}) || {}
@@ -369,11 +370,14 @@ export const useLikeArtwork = () => {
       const previousArtwork = queryClient.getQueryData(queryKeys.artwork(artworkId))
 
       // Optimistically update
-      queryClient.setQueryData(queryKeys.artwork(artworkId), (old: any) => ({
-        ...old,
-        like_count: (old?.like_count || 0) + 1,
-        is_liked: true
-      }))
+      queryClient.setQueryData(queryKeys.artwork(artworkId), (old: unknown) => {
+        const artwork = old as { like_count?: number; is_liked?: boolean }
+        return {
+          ...artwork,
+          like_count: (artwork?.like_count || 0) + 1,
+          is_liked: true
+        }
+      })
 
       return { previousArtwork, artworkId }
     },
@@ -455,6 +459,7 @@ export const useQueryPerformance = (queryKey: readonly unknown[]) => {
         logger.performance(`Query ${queryKey.join(':')}`, duration, 'ms')
       }
     }
+    return undefined
   }, [queryKey, queryClient])
 }
 

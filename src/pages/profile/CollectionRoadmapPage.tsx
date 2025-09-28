@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { Helmet } from 'react-helmet-async'
 import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../contexts/AuthProvider'
-import Container from "../brush/components/forms/Container"
+import Container from "../../brush/components/forms/Container"
 import { showErrorToast, showSuccessToast } from '../../utils/errorHandling'
 import Icon from "../../brush/Icon"
 
@@ -78,7 +78,7 @@ const CollectionRoadmapPage: React.FC = () => {
           target_artist_ids: data.target_artist_ids || [],
           target_genres: data.target_genres || [],
           target_colors: data.target_colors || [],
-          target_price_range: data.target_price_range || { min: 0, max: 100000 }
+          target_price_range: (data.target_price_range as { min: number; max: number }) || { min: 0, max: 100000 }
         })
       }
     } catch (error) {

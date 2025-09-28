@@ -7,8 +7,8 @@ import {
 } from 'lucide-react'
 import { useAuth } from '../../contexts/AuthProvider'
 import { supabase } from '../../lib/supabase'
-import Container from "../brush/components/forms/Container"
-import LivePreferenceControls, { LivePreferences } from '../../components/common/LivePreferenceControls'
+import Container from "../../brush/components/forms/Container"
+import { LivePreferenceControls, LivePreferences } from '../../brush/components'
 
 interface CollectorLearnings {
   tasteProfile: {
@@ -90,7 +90,7 @@ const ComprehensiveSettingsPage: React.FC = () => {
       // Process and structure the learnings
       const processedLearnings: CollectorLearnings = {
         tasteProfile: {
-          preferredMediums: tasteData?.preferred_mediums || [],
+          preferredMediums: (tasteData?.preferred_mediums as { medium: string; confidence: number; interactions: number; }[]) || [],
           preferredStyles: tasteData?.preferred_styles || [],
           colorPreferences: tasteData?.color_preferences || [],
           priceRange: tasteData?.price_range || { min: 0, max: 50000, average: 10000, confidence: 0.5 },
@@ -627,7 +627,7 @@ const ComprehensiveSettingsPage: React.FC = () => {
           )}
         </div>
 
-        <style jsx>{`
+        <style>{`
           .comprehensive-settings {
             max-width: 1200px;
             margin: 0 auto;

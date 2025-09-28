@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { Helmet } from 'react-helmet-async'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
-import { Eye, EyeOff, Lock, CheckCircle, ArrowRight } from 'lucide-react'
+import { Eye, EyeOff, Lock, ArrowRight } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import { showErrorToast, showSuccessToast } from '../../utils/errorHandling'
 
@@ -16,7 +16,7 @@ const ResetPasswordPage: React.FC = () => {
   const [sessionChecked, setSessionChecked] = useState(false)
   
   const navigate = useNavigate()
-  const [searchParams] = useSearchParams()
+  // const [searchParams] = useSearchParams()
 
   useEffect(() => {
     const checkSession = async () => {
@@ -90,16 +90,17 @@ const ResetPasswordPage: React.FC = () => {
       
       showSuccessToast('Password updated successfully!')
       navigate('/login')
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Password reset error:', error)
       
-      if (error.message?.includes('Password should be at least')) {
+      const errorMessage = (error as { message?: string }).message
+      if (errorMessage?.includes('Password should be at least')) {
         setErrors({ password: 'Password must be at least 8 characters long' })
       } else {
         setErrors({ general: 'Something went wrong. Please try again.' })
       }
       
-      showErrorToast(error, { 
+      showErrorToast((error as { message?: string }).message || 'Failed to reset password', { 
         component: 'ResetPasswordPage', 
         action: 'handleSubmit' 
       })

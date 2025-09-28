@@ -4,8 +4,8 @@ import { Link } from 'react-router-dom'
 import { ShoppingBag, Search, Filter, Grid, List, Share2, Eye, Calendar, MapPin, Palette, Ruler, Download, FileText } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../contexts/AuthProvider'
-import Container from "../brush/components/forms/Container"
-import ArtworkCard from '../../components/marketplace/ArtworkCard'
+import Container from "../../brush/components/forms/Container"
+import ArtworkCard from '../../brush/components/marketplace/ArtworkCard'
 import { showErrorToast } from '../../utils/errorHandling'
 
 interface CollectionArtwork {
@@ -73,23 +73,26 @@ const CollectionPage: React.FC = () => {
         throw error
       }
 
-      const collectionArtworks: CollectionArtwork[] = (data || []).map(item => ({
-        id: item.artworks?.[0]?.id || item.artworks?.id,
-        title: item.artworks?.[0]?.title || item.artworks?.title || 'Untitled',
-        artist: {
-          name: item.artworks?.[0]?.profiles?.[0]?.full_name || item.artworks?.profiles?.[0]?.full_name || 'Unknown Artist',
-          slug: item.artworks?.[0]?.profiles?.[0]?.slug || item.artworks?.profiles?.[0]?.slug || (item.artworks?.[0]?.id || item.artworks?.id)
-        },
-        primaryImageUrl: item.artworks?.[0]?.primary_image_url || item.artworks?.primary_image_url || '',
-        price: item.artworks?.[0]?.price || item.artworks?.price || 0,
-        currency: item.artworks?.[0]?.currency || item.artworks?.currency || 'ZAR',
-        medium: item.artworks?.[0]?.medium || item.artworks?.medium || '',
-        year: item.artworks?.[0]?.year || item.artworks?.year || new Date().getFullYear(),
-        dimensions: item.artworks?.[0]?.dimensions || item.artworks?.dimensions,
-        genre: item.artworks?.[0]?.genre || item.artworks?.genre || '',
-        purchasedAt: item.created_at,
-        status: item.status as 'purchased' | 'shipped' | 'delivered'
-      }))
+      const collectionArtworks: CollectionArtwork[] = (data || []).map(item => {
+        const artwork = item.artworks?.[0] || item.artworks
+        return {
+          id: artwork?.id || 'unknown',
+          title: artwork?.title || 'Untitled',
+          artist: {
+            name: artwork?.profiles?.[0]?.full_name || 'Unknown Artist',
+            slug: artwork?.profiles?.[0]?.slug || artwork?.id || 'unknown'
+          },
+          primaryImageUrl: artwork?.primary_image_url || '',
+          price: artwork?.price || 0,
+          currency: artwork?.currency || 'ZAR',
+          medium: artwork?.medium || '',
+          year: artwork?.year || new Date().getFullYear(),
+          dimensions: artwork?.dimensions || '',
+          genre: artwork?.genre || '',
+          purchasedAt: item.created_at,
+          status: (item.status as 'purchased' | 'shipped' | 'delivered') || 'purchased'
+        }
+      })
 
       setCollection(collectionArtworks)
     } catch (error) {

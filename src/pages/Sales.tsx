@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useEffect } from 'react'
+import React, { useMemo, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
 import { Link } from 'react-router-dom'
@@ -40,7 +40,7 @@ interface CollectorSale {
   purchased_at: string
   purchase_price: number
   status: string
-  shipping_address: any
+  shipping_address: unknown
   payment_method: string
   transaction_id: string
 }
@@ -52,13 +52,18 @@ const fetchSalesData = async (artistId: string): Promise<AppSale[]> => {
     .eq('artist_id', artistId)
     .order('sale_date', { ascending: false })
   if (error) throw new Error(error.message)
-  return (data as any).map((sale: any) => ({
-    ...sale,
-    artworks: {
-      title: sale.artworks?.title ?? null,
-      image_url: sale.artworks?.artwork_images?.find((i: any) => i.is_primary)?.image_url || sale.artworks?.artwork_images?.[0]?.image_url || null,
-    }
-  }))
+  return (data as unknown[]).map((sale: unknown) => {
+    const saleData = sale as Record<string, unknown>
+    const artworks = saleData.artworks as Record<string, unknown>
+    const artworkImages = artworks?.artwork_images as Array<Record<string, unknown>> | undefined
+    return {
+      ...saleData,
+      artworks: {
+        title: artworks?.title ?? null,
+        image_url: artworkImages?.find((i: Record<string, unknown>) => i.is_primary)?.image_url || artworkImages?.[0]?.image_url || null,
+      }
+    } as AppSale
+  })
 }
 
 const fetchMonthlyRevenue = async (artistId: string): Promise<MonthlyRevenue[]> => {
@@ -84,31 +89,34 @@ const fetchCollectorSales = async (userId: string): Promise<CollectorSale[]> => 
 
   if (error) throw new Error(error.message)
   
-  return (data || []).map(sale => ({
-    id: sale.id,
-    artwork: {
-      id: sale.artworks?.[0]?.id || sale.artworks?.id,
-      title: sale.artworks?.[0]?.title || sale.artworks?.title || 'Untitled',
-      primary_image_url: sale.artworks?.[0]?.primary_image_url || sale.artworks?.primary_image_url || '',
-      price: sale.artworks?.[0]?.price || sale.artworks?.price || 0,
-      currency: sale.artworks?.[0]?.currency || sale.artworks?.currency || 'USD',
-      medium: sale.artworks?.[0]?.medium || sale.artworks?.medium || '',
-      year: sale.artworks?.[0]?.year || sale.artworks?.year || new Date().getFullYear()
-    },
-    artist: {
-      name: sale.artworks?.[0]?.profiles?.[0]?.full_name || sale.artworks?.profiles?.[0]?.full_name || 'Unknown Artist',
-      slug: sale.artworks?.[0]?.profiles?.[0]?.slug || sale.artworks?.profiles?.[0]?.slug || ''
-    },
-    purchased_at: sale.purchased_at,
-    purchase_price: sale.purchase_price || 0,
-    status: sale.status,
-    shipping_address: sale.shipping_address,
-    payment_method: sale.payment_method || '',
-    transaction_id: sale.transaction_id || ''
-  }))
+  return (data || []).map(sale => {
+    const artwork = sale.artworks?.[0] || sale.artworks
+    return {
+      id: sale.id,
+      artwork: {
+        id: artwork?.id || 'unknown',
+        title: artwork?.title || 'Untitled',
+        primary_image_url: artwork?.primary_image_url || '',
+        price: artwork?.price || 0,
+        currency: artwork?.currency || 'USD',
+        medium: artwork?.medium || '',
+        year: artwork?.year || new Date().getFullYear()
+      },
+      artist: {
+        name: artwork?.profiles?.[0]?.full_name || 'Unknown Artist',
+        slug: artwork?.profiles?.[0]?.slug || ''
+      },
+      purchased_at: sale.purchased_at,
+      purchase_price: sale.purchase_price || 0,
+      status: sale.status,
+      shipping_address: sale.shipping_address,
+      payment_method: sale.payment_method || '',
+      transaction_id: sale.transaction_id || ''
+    }
+  })
 }
 
-const CustomTooltip = ({ active, payload, label }: any) => {
+const CustomTooltip = ({ active, payload, label }: { active?: boolean; payload?: Array<{ value: number }>; label?: string }) => {
   if (active && payload && payload.length) {
     return (
       <div className="p-2 bg-card border border-border rounded-md shadow-lg">
@@ -125,8 +133,8 @@ export default function SalesPage() {
   const [dateRange, setDateRange] = useState({ from: format(subMonths(new Date(), 1), 'yyyy-MM-dd'), to: format(new Date(), 'yyyy-MM-dd') })
   const [collectorFilter, setCollectorFilter] = useState<'all' | 'purchased' | 'shipped' | 'delivered'>('all')
 
-  const isArtist = profile?.role === 'artist' || profile?.role === 'ARTIST'
-  const isCollector = profile?.role === 'collector' || profile?.role === 'COLLECTOR'
+  const isArtist = profile?.role === 'artist'
+  const isCollector = profile?.role === 'collector'
 
   // Artist sales data
   const { data: artistSales = [], isLoading: isLoadingArtistSales } = useQuery<AppSale[], Error>({ 
@@ -198,7 +206,7 @@ export default function SalesPage() {
         s.sale_date ? new Date(s.sale_date).toLocaleDateString() : '', 
         JSON.stringify(s.collector?.full_name || 'N/A'), 
         s.sale_price, 
-        (s as any).digital_coa_url || 'Physical'
+        (s as { digital_coa_url?: string }).digital_coa_url || 'Physical'
       ])
       const csvContent = [headers.join(','), ...rows.map(r => r.join(','))].join('\n')
       const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
@@ -342,7 +350,7 @@ export default function SalesPage() {
                 <div className="flex items-center gap-4">
                   <select 
                     value={collectorFilter} 
-                    onChange={e => setCollectorFilter(e.target.value as any)}
+                    onChange={e => setCollectorFilter(e.target.value as 'all' | 'purchased' | 'shipped' | 'delivered')}
                     className="form-select"
                   >
                     <option value="all">All Status</option>

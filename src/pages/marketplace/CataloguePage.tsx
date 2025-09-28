@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { Helmet } from 'react-helmet-async'
 import { useParams, Link, useNavigate } from 'react-router-dom'
-import { fetchCatalogueBySlugs, fetchArtworkBySlugs } from '@/services/data'
+import { fetchCatalogueBySlugs, fetchArtworkBySlugs, type Catalogue } from '@/services/data'
 import { parseFriendlyUrl } from '@/utils/slug'
 import { Heart, Share2, Eye, Calendar, User, Globe, Lock, Users, Mail } from 'lucide-react'
 import toast from 'react-hot-toast'
@@ -19,26 +19,6 @@ interface CatalogueItem {
   }
 }
 
-interface Catalogue {
-  id: string
-  title: string
-  slug: string
-  description: string | null
-  cover_image_url: string | null
-  is_public: boolean
-  access_mode: 'public' | 'password' | 'whitelist' | 'private'
-  password: string | null
-  created_at: string
-  updated_at: string
-  artist: {
-    id: string
-    slug: string
-    full_name: string
-    avatar_url: string | null
-    bio: string | null
-  }
-  items: CatalogueItem[]
-}
 
 const CataloguePage: React.FC = () => {
   const { artistSlug, catalogueSlug, id } = useParams()
@@ -56,7 +36,7 @@ const CataloguePage: React.FC = () => {
         setLoading(true)
         setError(null)
 
-        let catalogueData: Catalogue
+        let catalogueData: Catalogue | null
 
         if (artistSlug && catalogueSlug) {
           // Friendly URL: /artist-slug/catalogue/catalogue-slug
@@ -68,6 +48,11 @@ const CataloguePage: React.FC = () => {
         } else {
           // Redirect to home if no valid parameters
           navigate('/', { replace: true })
+          return
+        }
+
+        if (!catalogueData) {
+          setError('Catalogue not found')
           return
         }
 
@@ -226,10 +211,10 @@ const CataloguePage: React.FC = () => {
   return (
     <div style={{ minHeight: '100vh', backgroundColor: 'var(--bg)' }}>
       <Helmet>
-        <title>{catalogue.title} | {catalogue.artist.full_name} | ArtFlow</title>
-        <meta name="description" content={catalogue.description || `Catalogue by ${catalogue.artist.full_name}`} />
+        <title>{catalogue.title} | {catalogue.artist?.full_name || 'Unknown Artist'} | ArtFlow</title>
+        <meta name="description" content={catalogue.description || `Catalogue by ${catalogue.artist?.full_name || 'Unknown Artist'}`} />
         <meta property="og:title" content={catalogue.title} />
-        <meta property="og:description" content={catalogue.description || `Catalogue by ${catalogue.artist.full_name}`} />
+        <meta property="og:description" content={catalogue.description || `Catalogue by ${catalogue.artist?.full_name || 'Unknown Artist'}`} />
         <meta property="og:image" content={catalogue.cover_image_url || ''} />
         <meta property="og:type" content="website" />
       </Helmet>
@@ -247,7 +232,7 @@ const CataloguePage: React.FC = () => {
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-lg)', marginBottom: 'var(--space-lg)' }}>
             <Link
-              to={`/artist/${catalogue.artist.slug}`}
+              to={`/artist/${catalogue.artist?.slug || 'unknown'}`}
               style={{
                 display: 'flex',
                 alignItems: 'center',
@@ -258,7 +243,7 @@ const CataloguePage: React.FC = () => {
               }}
             >
               <User size={16} />
-              {catalogue.artist.full_name}
+              {catalogue.artist?.full_name || 'Unknown Artist'}
             </Link>
             <span style={{ color: 'var(--border)', fontSize: '14px' }}>/</span>
             <span style={{ color: 'var(--fg)', fontSize: '14px' }}>Catalogue</span>
@@ -291,7 +276,7 @@ const CataloguePage: React.FC = () => {
                 <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-xs)' }}>
                   <Eye size={16} style={{ color: 'var(--muted)' }} />
                   <span style={{ fontSize: '14px', color: 'var(--muted)' }}>
-                    {catalogue.items.length} artwork{catalogue.items.length !== 1 ? 's' : ''}
+                    {catalogue.items?.length || 0} artwork{(catalogue.items?.length || 0) !== 1 ? 's' : ''}
                   </span>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-xs)' }}>
@@ -361,18 +346,18 @@ const CataloguePage: React.FC = () => {
         margin: '0 auto',
         padding: 'var(--space-2xl) var(--space-lg)'
       }}>
-        {catalogue.items.length > 0 ? (
+        {(catalogue.items?.length || 0) > 0 ? (
           <div style={{
             display: 'grid',
             gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
             gap: 'var(--space-xl)'
           }}>
             {catalogue.items
-              .sort((a, b) => a.position - b.position)
+              ?.sort((a, b) => a.position - b.position)
               .map((item) => (
                 <Link
                   key={item.id}
-                  to={`/artist/${catalogue.artist.slug}/${item.artwork.slug}`}
+                  to={`/artist/${catalogue.artist?.slug || 'unknown'}/${item.artwork.slug}`}
                   style={{
                     textDecoration: 'none',
                     color: 'inherit',

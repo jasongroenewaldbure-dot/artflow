@@ -5,8 +5,8 @@ import { Helmet } from 'react-helmet-async';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthProvider';
 import Container from "../../brush/components/forms/Container";
-import Toggle from '../../components/common/Toggle';
-import LivePreferenceControls from '../../components/common/LivePreferenceControls';
+import Toggle from '../../brush/components/forms/Toggle';
+import { LivePreferenceControls } from '../../brush/components';
 import { logger, useLogger } from '../../services/logger';
 import { 
   Trash2, User, Lock, Shield, Mail, Clock, Bell, Brain, Palette, 
@@ -16,7 +16,7 @@ import {
 import type { 
   UserPreferences, 
   LearnedPreferences, 
-  LivePreferences,
+  UserLivePreferences,
   NotificationEntityTypeSettings,
   Profile 
 } from '../../types';
@@ -24,11 +24,11 @@ import type {
 // --- Type Definitions ---
 
 // Notification type settings within JSONB (e.g., artwork: true, artist: false)
-interface NotificationEntityTypeSettings {
-  artwork: boolean;
-  artist: boolean;
-  catalogue: boolean;
-}
+// interface NotificationEntityTypeSettings {
+//   artwork: boolean;
+//   artist: boolean;
+//   catalogue: boolean;
+// }
 
 // Learned budget range structure (from learned_preferences)
 interface LearnedBudgetRange {
@@ -38,101 +38,101 @@ interface LearnedBudgetRange {
 }
 
 // Enhanced LearnedPreferences with all AI insights
-interface LearnedPreferences {
-  top_liked_mediums?: { name: string; count: number; confidence: number }[];
-  top_liked_styles?: { name: string; count: number; confidence: number }[];
-  preferred_price_range_from_behavior?: LearnedBudgetRange;
-  overall_engagement_score?: number;
-  
-  // Color Intelligence
-  color_preferences?: Array<{ 
-    color: string; 
-    hex: string; 
-    oklch: any; 
-    frequency: number;
-    confidence: number;
-  }>;
-  
-  // Behavioral Patterns
-  behavioral_patterns?: {
-    peak_browsing_hours: string[];
-    session_duration_avg: number;
-    decision_speed: 'fast' | 'moderate' | 'slow';
-    research_depth: 'surface' | 'moderate' | 'deep';
-    price_sensitivity: number;
-    social_influence_factor: number;
-  };
-  
-  // AI Performance Metrics
-  ai_performance?: {
-    recommendation_accuracy: number;
-    discovery_success_rate: number;
-    total_interactions: number;
-    learning_velocity: number;
-    exploration_rate: number;
-    last_updated: string;
-  };
-  
-  // Market Intelligence
-  market_intelligence?: {
-    collection_gaps: string[];
-    investment_opportunities: Array<{ 
-      artist: string; 
-      confidence: number; 
-      reasoning: string;
-      potential_return: number;
-    }>;
-    optimal_buying_times: string[];
-    budget_optimization_suggestions: string[];
-  };
-  
-  // Negative Preferences
-  negative_preferences?: {
-    disliked_mediums?: string[];
-    disliked_styles?: string[];
-    disliked_colors?: string[];
-    rejected_artists?: string[];
-  };
-  
-  top_followed_artists?: { artist_id: string; full_name: string }[];
-  last_learned_update?: string;
-  [key: string]: any;
-}
+// interface LearnedPreferences {
+//   top_liked_mediums?: { name: string; count: number; confidence: number }[];
+//   top_liked_styles?: { name: string; count: number; confidence: number }[];
+//   preferred_price_range_from_behavior?: LearnedBudgetRange;
+//   overall_engagement_score?: number;
+//   
+//   // Color Intelligence
+//   color_preferences?: Array<{ 
+//     color: string; 
+//     hex: string; 
+//     oklch: any; 
+//     frequency: number;
+//     confidence: number;
+//   }>;
+//   
+//   // Behavioral Patterns
+//   behavioral_patterns?: {
+//     peak_browsing_hours: string[];
+//     session_duration_avg: number;
+//     decision_speed: 'fast' | 'moderate' | 'slow';
+//     research_depth: 'surface' | 'moderate' | 'deep';
+//     price_sensitivity: number;
+//     social_influence_factor: number;
+//   };
+//   
+//   // AI Performance Metrics
+//   ai_performance?: {
+//     recommendation_accuracy: number;
+//     discovery_success_rate: number;
+//     total_interactions: number;
+//     learning_velocity: number;
+//     exploration_rate: number;
+//     last_updated: string;
+//   };
+//   
+//   // Market Intelligence
+//   market_intelligence?: {
+//     collection_gaps: string[];
+//     investment_opportunities: Array<{ 
+//       artist: string; 
+//       confidence: number; 
+//       reasoning: string;
+//       potential_return: number;
+//     }>;
+//     optimal_buying_times: string[];
+//     budget_optimization_suggestions: string[];
+//   };
+//   
+//   // Negative Preferences
+//   negative_preferences?: {
+//     disliked_mediums?: string[];
+//     disliked_styles?: string[];
+//     disliked_colors?: string[];
+//     rejected_artists?: string[];
+//   };
+//   
+//   top_followed_artists?: { artist_id: string; full_name: string }[];
+//   last_learned_update?: string;
+//   [key: string]: any;
+// }
 
 // Full UserPreferences structure
-interface UserPreferences {
-  user_id: string;
-  preferred_mediums: string[] | null;
-  preferred_styles: string[] | null;
-  min_budget: number | null;
-  max_budget: number | null;
-  use_learned_budget: boolean | null;
-  learned_preferences: LearnedPreferences | null;
-  live_preferences: LivePreferences | null;
-  
-  // Enhanced notification settings
-  notification_real_time: NotificationEntityTypeSettings | null;
-  notification_daily: NotificationEntityTypeSettings | null;
-  notification_weekly: NotificationEntityTypeSettings | null;
-  
-  // Granular alert lists & exclusion filters
-  alert_specific_artists: string[] | null;
-  alert_specific_mediums: string[] | null;
-  alert_specific_styles: string[] | null;
-  exclude_mediums: string[] | null;
-  exclude_styles: string[] | null;
-  exclude_artists: string[] | null;
-  
-  // Enhanced notification preferences
-  notify_by_email: boolean | null;
-  notify_price_drops: boolean | null;
-  notify_new_works: boolean | null;
-  notify_auction_reminders: boolean | null;
-  notify_collection_insights: boolean | null;
-  preferred_digest_time: string | null;
-
-  updated_at: string;
-}
+// interface UserPreferences {
+//   user_id: string;
+//   preferred_mediums: string[] | null;
+//   preferred_styles: string[] | null;
+//   min_budget: number | null;
+//   max_budget: number | null;
+//   use_learned_budget: boolean | null;
+//   learned_preferences: LearnedPreferences | null;
+//   live_preferences: LivePreferences | null;
+//   
+//   // Enhanced notification settings
+//   notification_real_time: NotificationEntityTypeSettings | null;
+//   notification_daily: NotificationEntityTypeSettings | null;
+//   notification_weekly: NotificationEntityTypeSettings | null;
+//   
+//   // Granular alert lists & exclusion filters
+//   alert_specific_artists: string[] | null;
+//   alert_specific_mediums: string[] | null;
+//   alert_specific_styles: string[] | null;
+//   exclude_mediums: string[] | null;
+//   exclude_styles: string[] | null;
+//   exclude_artists: string[] | null;
+//   
+//   // Enhanced notification preferences
+//   notify_by_email: boolean | null;
+//   notify_price_drops: boolean | null;
+//   notify_new_works: boolean | null;
+//   notify_auction_reminders: boolean | null;
+//   notify_collection_insights: boolean | null;
+//   preferred_digest_time: string | null;
+//
+//   updated_at: string;
+// }
 
 // --- Modals ---
 interface ConfirmationModalProps {
@@ -198,7 +198,7 @@ const EnhancedCollectorSettingsPage: React.FC = () => {
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
 
   // --- AI Intelligence States ---
-  const [livePreferences, setLivePreferences] = useState<LivePreferences>();
+  const [livePreferences, setLivePreferences] = useState<UserLivePreferences>();
 
   // --- Preferences Tab States ---
   const [preferredMediums, setPreferredMediums] = useState('');
@@ -516,8 +516,7 @@ const EnhancedCollectorSettingsPage: React.FC = () => {
     try {
       await updatePreferencesMutation.mutateAsync({ 
         learned_preferences: {
-          last_learned_update: new Date().toISOString(),
-          reset_reason: 'User requested reset'
+          last_learned_update: new Date().toISOString()
         }
       });
       alert('AI learned data cleared. The system will start learning fresh.');
@@ -851,8 +850,20 @@ const EnhancedCollectorSettingsPage: React.FC = () => {
                   <h4>Live AI Preference Controls</h4>
                   <p>These controls adjust your recommendations in real-time</p>
                   <LivePreferenceControls
-                    onPreferencesChange={setLivePreferences}
-                    initialPreferences={livePreferences}
+                    onPreferencesChange={(prefs) => {
+                      // Convert LivePreferences to UserLivePreferences
+                      const userPrefs: UserLivePreferences = {
+                        paletteBias: 'neutral',
+                        priceSensitivity: 0.5,
+                        abstractionLevel: 0.5,
+                        discoveryMode: 0.5,
+                        sizeBias: 'any',
+                        mediumFocus: [],
+                        colorPreferences: []
+                      }
+                      setLivePreferences({ ...livePreferences, ...userPrefs, ...prefs as any })
+                    }}
+                    initialPreferences={livePreferences as any}
                   />
                 </div>
 
@@ -1405,7 +1416,7 @@ const EnhancedCollectorSettingsPage: React.FC = () => {
           isDestructive
         />
 
-        <style jsx>{`
+        <style>{`
           .enhanced-collector-settings {
             max-width: 1200px;
             margin: 0 auto;

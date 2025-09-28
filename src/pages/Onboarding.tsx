@@ -41,7 +41,7 @@ const Onboarding: React.FC = () => {
   const [errors, setErrors] = useState<ValidationErrors>({})
   const [loading, setLoading] = useState(false)
   const [isGeneratingSlug, setIsGeneratingSlug] = useState(false)
-  const [user, setUser] = useState<any>(null)
+  const [user, setUser] = useState<{ id: string } | null>(null)
   const navigate = useNavigate()
 
   // Check if user is authenticated and get current profile
@@ -69,21 +69,21 @@ const Onboarding: React.FC = () => {
           throw profileError
         }
 
-        if (existingProfile && existingProfile.full_name && (existingProfile as any).profile_complete) {
+        if (existingProfile && existingProfile.full_name && (existingProfile as { profile_complete?: boolean }).profile_complete) {
           // Profile already complete, redirect to dashboard
           navigate('/u/dashboard', { replace: true })
           return
         }
 
         // Always check if user needs to set up password (for magic link users)
-        const hasPassword = user.user_metadata?.password_set || (existingProfile as any)?.password_set || false
+        const hasPassword = user.user_metadata?.password_set || (existingProfile as { password_set?: boolean })?.password_set || false
         
         // Force password setup if not set
         if (!hasPassword) {
           setStep('password')
         } else if (!existingProfile?.full_name) {
           setStep('role')
-        } else if (!(existingProfile as any)?.profile_complete) {
+        } else if (!(existingProfile as { profile_complete?: boolean })?.profile_complete) {
           // Check if user needs preferences or can complete onboarding
           if (existingProfile.role === 'collector' || existingProfile.role === 'both') {
             setStep('preferences')
@@ -103,7 +103,7 @@ const Onboarding: React.FC = () => {
             location: existingProfile.location || 'South Africa'
           }))
         }
-      } catch (error: any) {
+      } catch (error: unknown) {
         console.error('Auth check failed:', error)
         toast.error('Failed to verify authentication. Please try again.')
         navigate('/start', { replace: true })
@@ -131,7 +131,7 @@ const Onboarding: React.FC = () => {
       const newSlug = generateUniqueSlugWithRandom(name, slugs)
       
       return newSlug
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Slug generation failed:', error)
       toast.error('Failed to generate profile URL. Please try again.')
       return null
@@ -145,7 +145,7 @@ const Onboarding: React.FC = () => {
     if (!name.trim()) return 'Name is required'
     if (name.trim().length < 2) return 'Name must be at least 2 characters'
     if (name.trim().length > 100) return 'Name must be less than 100 characters'
-    if (!/^[a-zA-Z\s\-'\.]+$/.test(name.trim())) return 'Name contains invalid characters'
+    if (!/^[a-zA-Z\s\-'.]+$/.test(name.trim())) return 'Name contains invalid characters'
     return undefined
   }
 
@@ -230,9 +230,9 @@ const Onboarding: React.FC = () => {
 
       toast.success('Password set successfully!')
       setStep('role')
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Password setup failed:', error)
-      toast.error(error.message || 'Failed to set password. Please try again.')
+      toast.error((error as { message?: string }).message || 'Failed to set password. Please try again.')
     } finally {
       setLoading(false)
     }
@@ -321,9 +321,9 @@ const Onboarding: React.FC = () => {
       } else { // BOTH
         setStep('preferences') // Start with collector preferences, then artist setup
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Profile save failed:', error)
-      toast.error(error.message || 'Failed to save profile. Please try again.')
+      toast.error((error as { message?: string }).message || 'Failed to save profile. Please try again.')
     } finally {
       setLoading(false)
     }
@@ -346,7 +346,7 @@ const Onboarding: React.FC = () => {
 
       toast.success('Welcome to ArtFlow!')
       navigate('/u/dashboard', { replace: true })
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Failed to complete onboarding:', error)
       toast.error('Failed to complete onboarding. Please try again.')
     }
@@ -369,7 +369,7 @@ const Onboarding: React.FC = () => {
 
       toast.success('Welcome to ArtFlow!')
       navigate('/u/dashboard', { replace: true })
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Failed to complete onboarding:', error)
       toast.error('Failed to complete onboarding. Please try again.')
     }

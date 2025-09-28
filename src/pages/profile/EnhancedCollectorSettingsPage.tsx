@@ -4,9 +4,9 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Helmet } from 'react-helmet-async';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthProvider';
-import Container from "../brush/components/forms/Container";
-import Toggle from '../../components/common/Toggle';
-import LivePreferenceControls, { LivePreferences } from '../../components/common/LivePreferenceControls';
+import Container from "../../brush/components/forms/Container";
+import Toggle from '../../brush/components/forms/Toggle';
+import { LivePreferenceControls, LivePreferences } from '../../brush/components';
 import { 
   Trash2, User, Lock, Shield, Mail, Clock, Bell, Brain, Palette, 
   TrendingUp, BarChart3, Download, Camera, Eye, Heart, ShoppingBag,
@@ -527,7 +527,7 @@ const EnhancedCollectorSettingsPage = () => {
         min_budget: null,
         max_budget: null,
         use_learned_budget: false,
-        alert_specific_artists: [],
+        alert_specific_artists: null,
         alert_specific_mediums: [],
         alert_specific_styles: [],
         exclude_mediums: [],
@@ -1396,7 +1396,7 @@ const EnhancedCollectorSettingsPage = () => {
           isDestructive
         />
 
-        <style jsx>{`
+        <style>{`
           .enhanced-collector-settings {
             max-width: 1200px;
             margin: 0 auto;

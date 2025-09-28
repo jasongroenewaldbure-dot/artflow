@@ -8,8 +8,8 @@ import {
 } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../contexts/AuthProvider'
-import Container from "../brush/components/forms/Container"
-import LivePreferenceControls, { LivePreferences } from '../../components/common/LivePreferenceControls'
+import Container from "../../brush/components/forms/Container"
+import { LivePreferenceControls, LivePreferences } from '../../brush/components'
 import { showErrorToast, showSuccessToast } from '../../utils/errorHandling'
 
 interface CollectorProfile {
@@ -118,7 +118,7 @@ const CollectorSettingsPage: React.FC = () => {
       }
 
       if (preferencesData?.live_preferences) {
-        setPreferences(preferencesData.live_preferences)
+        setPreferences(preferencesData.live_preferences as any)
       }
 
     } catch (error) {
@@ -816,7 +816,7 @@ const CollectorSettingsPage: React.FC = () => {
           )}
         </div>
 
-        <style jsx>{`
+        <style>{`
           .collector-settings-page {
             max-width: 1200px;
             margin: 0 auto;

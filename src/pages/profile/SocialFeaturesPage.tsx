@@ -19,10 +19,10 @@ import {
   Save,
   Share2
 } from 'lucide-react'
-import UserCollections from '../../components/social/UserCollections'
-import ArtistFollowing from '../../components/social/ArtistFollowing'
-import VisualSearch from '../../components/search/VisualSearch'
-import AdvancedSearch from '../../components/search/AdvancedSearch'
+import UserCollections from '../../brush/components/social/UserCollections'
+import ArtistFollowing from '../../brush/components/social/ArtistFollowing'
+import VisualSearch from '../../brush/components/search/VisualSearch'
+import AdvancedSearch from '../../brush/components/search/AdvancedSearch'
 
 const SocialFeaturesPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'collections' | 'following' | 'search' | 'visual' | 'trending' | 'analytics' | 'messages' | 'settings'>('collections')
@@ -43,7 +43,7 @@ const SocialFeaturesPage: React.FC = () => {
       case 'collections':
         return <UserCollections isOwnProfile={true} />
       case 'following':
-        return <ArtistFollowing isOwnProfile={true} />
+        return <ArtistFollowing />
       case 'search':
         return <AdvancedSearch />
       case 'visual':

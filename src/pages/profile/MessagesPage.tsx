@@ -3,7 +3,7 @@ import { Helmet } from 'react-helmet-async'
 import { Link } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../contexts/AuthProvider'
-import Container from "../brush/components/forms/Container"
+import Container from "../../brush/components/forms/Container"
 import { showErrorToast, showSuccessToast } from '../../utils/errorHandling'
 import Icon from "../../brush/Icon"
 
@@ -19,7 +19,7 @@ interface Conversation {
   artist: {
     id: string
     display_name: string
-    avatar_url?: string
+    avatar_url?: string | null
   }
   status: string
   last_message_at: string
@@ -78,27 +78,31 @@ const MessagesPage: React.FC = () => {
 
       if (error) throw error
 
-      const processedConversations: Conversation[] = (data || []).map(conv => ({
-        id: conv.id,
-        artwork: {
-          id: conv.artworks.id,
-          title: conv.artworks.title || 'Untitled',
-          primary_image_url: conv.artworks.primary_image_url || '',
-          price: conv.artworks.price || 0,
-          currency: conv.artworks.currency || 'ZAR'
-        },
-        artist: {
-          id: conv.profiles.id,
-          display_name: conv.profiles.display_name || 'Unknown Artist',
-          avatar_url: conv.profiles.avatar_url
-        },
-        status: conv.status,
-        last_message_at: conv.last_message_at,
-        last_message_preview: conv.last_message_preview || '',
-        artist_unread: conv.artist_unread,
-        inquirer_unread: conv.inquirer_unread,
-        created_at: conv.created_at
-      }))
+      const processedConversations: Conversation[] = (data || []).map(conv => {
+        const artwork = conv.artworks?.[0] || conv.artworks
+        const profile = conv.profiles?.[0] || conv.profiles
+        return {
+          id: conv.id,
+          artwork: {
+            id: artwork?.id || 'unknown',
+            title: artwork?.title || 'Untitled',
+            primary_image_url: artwork?.primary_image_url || '',
+            price: artwork?.price || 0,
+            currency: artwork?.currency || 'ZAR'
+          },
+          artist: {
+            id: profile?.id || 'unknown',
+            display_name: profile?.display_name || 'Unknown Artist',
+            avatar_url: profile?.avatar_url as string | null
+          },
+          status: conv.status,
+          last_message_at: conv.last_message_at,
+          last_message_preview: conv.last_message_preview || '',
+          artist_unread: conv.artist_unread,
+          inquirer_unread: conv.inquirer_unread,
+          created_at: conv.created_at
+        }
+      })
 
       setConversations(processedConversations)
     } catch (error) {

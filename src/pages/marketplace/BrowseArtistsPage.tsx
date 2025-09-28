@@ -7,7 +7,10 @@ import { showErrorToast } from '@/utils/errorHandling'
 import Container from "../../brush/components/forms/Container"
 import LoadingSpinner from "../../brush/components/feedback/LoadingSpinner"
 import ErrorMessage from "../../brush/components/forms/ErrorMessage"
-import HorizontalFilterSystem from "../../brush/components/marketplace/HorizontalFilterSystem"
+// import HorizontalFilterSystem from "../../brush/components/marketplace/HorizontalFilterSystem"
+// Enhanced filtering libraries available for future use
+// import { ART_STYLES, STYLE_CATEGORIES, getStylesByCategory, findStyleSynonyms } from '@/lib/artStylesLibrary'
+// import { MOOD_DEFINITIONS, COLOR_DEFINITIONS, findMoodWords, findColorSynonyms } from '@/lib/colorLibrary'
 
 interface Artist {
   id: string
@@ -85,7 +88,7 @@ const ArtistsPage: React.FC = () => {
       const processedArtists: Artist[] = (data || []).map((artist: any) => {
         const artworks = artist.artworks || []
         const recent_artworks = artworks.slice(0, 3)
-        const specialties = [...new Set(artworks.map((a: any) => a.genre).filter(Boolean))]
+        const specialties = [...new Set(artworks.map((a: any) => a.genre).filter(Boolean))] as string[]
         
         return {
           id: artist.id,
@@ -103,7 +106,7 @@ const ArtistsPage: React.FC = () => {
       setArtists(processedArtists)
       
       // Extract unique locations and specialties
-      const locations = [...new Set(processedArtists.map(a => a.location).filter(Boolean))].sort()
+      const locations = [...new Set(processedArtists.map(a => a.location).filter(Boolean))].sort() as string[]
       const allSpecialties = processedArtists.flatMap(a => a.specialties)
       const specialties = [...new Set(allSpecialties)].sort()
       

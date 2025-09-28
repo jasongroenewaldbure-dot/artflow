@@ -19,8 +19,8 @@ import {
   ChevronRight
 } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
-import LoadingSpinner from "../brush/components/feedback/LoadingSpinner"
-import Container from "../brush/components/forms/Container"
+import LoadingSpinner from "../../brush/components/feedback/LoadingSpinner"
+import Container from "../../brush/components/forms/Container"
 
 interface Artwork {
   id: string
@@ -220,6 +220,7 @@ const HomePage: React.FC = () => {
 
       return (data || []).map(catalogue => ({
         ...catalogue,
+        artist: catalogue.artist?.[0] || { id: '', full_name: 'Unknown Artist', slug: '' },
         artwork_count: Math.floor(Math.random() * 20) + 5, // Simulate artwork count
         is_featured: Math.random() > 0.3
       }))
@@ -265,6 +266,7 @@ const HomePage: React.FC = () => {
 
       return (data || []).map(artwork => ({
         ...artwork,
+        artist: artwork.artist?.[0] || { id: '', full_name: 'Unknown Artist', display_name: 'Unknown Artist', slug: '', avatar_url: '', location: '' },
         view_count: Math.floor(Math.random() * 1000) + 50,
         like_count: Math.floor(Math.random() * 100) + 5
       }))
@@ -304,7 +306,10 @@ const HomePage: React.FC = () => {
       .limit(8)
 
     if (error) throw error
-    return data || []
+    return (data || []).map(artwork => ({
+      ...artwork,
+      artist: artwork.artist?.[0] || { id: '', full_name: 'Unknown Artist', display_name: 'Unknown Artist', slug: '', avatar_url: '', location: '' }
+    }))
   }
 
   const loadEmergingArtists = async (): Promise<Artist[]> => {

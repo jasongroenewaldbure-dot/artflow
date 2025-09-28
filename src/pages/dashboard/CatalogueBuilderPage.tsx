@@ -8,7 +8,7 @@ import {
 } from 'lucide-react'
 import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd'
 import { supabase } from '../../lib/supabase'
-import ArtworkSelector from '../../components/marketplace/ArtworkSelector'
+import { ArtworkSelector } from '../../brush/components'
 import { useAuth } from '../../contexts/AuthProvider'
 
 interface CatalogueItem {
@@ -64,6 +64,7 @@ export default function CatalogueBuilderPage() {
   const [catalogue, setCatalogue] = useState<Catalogue | null>(null)
   const [items, setItems] = useState<CatalogueItem[]>([])
   const [selectedArtworkIds, setSelectedArtworkIds] = useState<string[]>([])
+  const [availableArtworks, setAvailableArtworks] = useState<any[]>([])
   const [showArtworkSelector, setShowArtworkSelector] = useState(false)
   const [showSettings, setShowSettings] = useState(false)
   const [previewMode, setPreviewMode] = useState(false)
@@ -619,11 +620,10 @@ export default function CatalogueBuilderPage() {
             </div>
 
             <ArtworkSelector
-              catalogueId={catalogue?.id || ''}
-              onArtworkAdd={(id) => setSelectedArtworkIds(prev => [...prev, id])}
-              onArtworkRemove={(id) => setSelectedArtworkIds(prev => prev.filter(i => i !== id))}
-              selectedArtworkIds={selectedArtworkIds}
-              userId={user?.id || ''}
+              artworks={availableArtworks}
+              selectedArtworks={selectedArtworkIds}
+              onSelectionChange={setSelectedArtworkIds}
+              onConfirm={() => setShowArtworkSelector(false)}
             />
 
             <div style={{

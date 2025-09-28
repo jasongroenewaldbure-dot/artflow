@@ -1,4 +1,4 @@
-import React, { useState, useRef, useCallback } from 'react'
+import React, { useState } from 'react'
 import { Helmet } from 'react-helmet-async'
 import { useNavigate } from 'react-router-dom'
 import { 
@@ -9,7 +9,7 @@ import {
   Eye,
   EyeOff,
   Lock,
-  Unlock,
+  // Unlock,
   Users,
   Calendar,
   Send,
@@ -18,14 +18,14 @@ import {
   Image as ImageIcon,
   Edit3,
   Trash2,
-  Move,
-  Settings,
-  Wand2,
-  Download,
-  Share2,
-  Clock,
-  CheckCircle,
-  AlertCircle
+  // Move,
+  // Settings,
+  // Wand2,
+  // Download,
+  // Share2,
+  // Clock,
+  // CheckCircle,
+  // AlertCircle
 } from 'lucide-react'
 
 interface CatalogueArtwork {
@@ -134,7 +134,7 @@ const CatalogueCreate: React.FC = () => {
     { id: 'gallery', name: 'Gallery', description: 'Professional exhibition style' }
   ]
 
-  const handleInputChange = (field: keyof CatalogueFormData, value: any) => {
+  const handleInputChange = (field: keyof CatalogueFormData, value: unknown) => {
     setFormData(prev => ({
       ...prev,
       [field]: value
@@ -161,7 +161,7 @@ const CatalogueCreate: React.FC = () => {
     setArtworks(prev => prev.filter(artwork => artwork.id !== id))
   }
 
-  const updateArtwork = (id: string, field: keyof CatalogueArtwork, value: any) => {
+  const updateArtwork = (id: string, field: keyof CatalogueArtwork, value: unknown) => {
     setArtworks(prev => prev.map(artwork => 
       artwork.id === id ? { ...artwork, [field]: value } : artwork
     ))
@@ -268,7 +268,7 @@ const CatalogueCreate: React.FC = () => {
               {tabs.map(tab => (
                 <button
                   key={tab.id}
-                  onClick={() => setActiveTab(tab.id as any)}
+                  onClick={() => setActiveTab(tab.id as 'content' | 'design' | 'audience' | 'schedule')}
                   className={`catalogue-create-tab ${activeTab === tab.id ? 'catalogue-create-tab--active' : ''}`}
                 >
                   {tab.icon}
@@ -687,7 +687,7 @@ const CatalogueCreate: React.FC = () => {
                 )}
               </div>
               <div className="catalogue-preview-artworks">
-                {artworks.map((artwork, index) => (
+                {artworks.map((artwork) => (
                   <div key={artwork.id} className="catalogue-preview-artwork">
                     <div className="catalogue-preview-artwork-image">
                       <img src={artwork.image} alt={artwork.title} />

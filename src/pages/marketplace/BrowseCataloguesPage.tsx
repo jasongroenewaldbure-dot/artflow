@@ -1,9 +1,11 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
 import { Helmet } from 'react-helmet-async'
 import { Link } from 'react-router-dom'
 import { supabase } from '@/lib/supabase'
 import Icon from "../../brush/Icon"
 import { toast } from 'react-hot-toast'
+import { ART_STYLES } from '@/lib/artStylesLibrary'
+import { MOOD_DEFINITIONS, COLOR_DEFINITIONS } from '@/lib/colorLibrary'
 
 interface Catalogue {
   id: string
@@ -36,8 +38,12 @@ const BrowseCataloguesPage: React.FC = () => {
   const [showFilters, setShowFilters] = useState(false)
   const [sortBy, setSortBy] = useState<'newest' | 'oldest' | 'most_viewed' | 'most_liked' | 'alphabetical'>('newest')
   const [filters, setFilters] = useState({
-    accessType: 'all' as 'all' | 'public' | 'password_protected' | 'private',
-    dateRange: 'all' as 'all' | 'today' | 'week' | 'month' | 'year'
+    dateRange: 'all' as 'all' | 'today' | 'week' | 'month' | 'year',
+    artStyle: 'all' as string,
+    mood: 'all' as string,
+    colorPalette: 'all' as string,
+    popularity: 'all' as 'all' | 'trending' | 'classic' | 'emerging',
+    marketValue: 'all' as 'all' | 'high' | 'medium' | 'low'
   })
 
   useEffect(() => {
@@ -70,7 +76,7 @@ const BrowseCataloguesPage: React.FC = () => {
       const catalogueUserIds = [...new Set((data || []).map(catalogue => catalogue.user_id))]
       const { data: catalogueArtists } = await supabase
         .from('profiles')
-        .select('id, full_name, slug')
+        .select('id, full_name, slug, avatar_url')
         .in('id', catalogueUserIds)
 
       const catalogueArtistMap = new Map(catalogueArtists?.map(artist => [artist.id, artist]) || [])
@@ -82,7 +88,8 @@ const BrowseCataloguesPage: React.FC = () => {
           artist: {
             id: artist?.id || catalogue.user_id,
             slug: artist?.slug || '',
-            name: artist?.full_name || 'Unknown Artist'
+            name: artist?.full_name || 'Unknown Artist',
+            avatar_url: artist?.avatar_url || null
           },
           artwork_count: 0, // No catalogue_items table in schema
           view_count: 0, // TODO: Implement view counting
@@ -91,16 +98,16 @@ const BrowseCataloguesPage: React.FC = () => {
       }) || []
 
       setCatalogues(cataloguesData)
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Error loading catalogues:', err)
-      setError(err.message || 'Failed to load catalogues')
+      setError((err as Error).message || 'Failed to load catalogues')
       toast.error('Failed to load catalogues')
     } finally {
       setLoading(false)
     }
   }
 
-  const filterAndSortCatalogues = () => {
+  const filterAndSortCatalogues = useCallback(() => {
     let filtered = [...catalogues]
 
     // Search filter
@@ -113,9 +120,73 @@ const BrowseCataloguesPage: React.FC = () => {
       )
     }
 
-    // Access type filter
-    if (filters.accessType !== 'all') {
-      filtered = filtered.filter(catalogue => catalogue.access_type === filters.accessType)
+    // Art style filter
+    if (filters.artStyle !== 'all') {
+      filtered = filtered.filter(catalogue => {
+        const catalogueText = `${catalogue.title} ${catalogue.description || ''}`.toLowerCase()
+        const style = ART_STYLES[filters.artStyle]
+        return style && (
+          catalogueText.includes(style.name.toLowerCase()) ||
+          style.synonyms.some(syn => catalogueText.includes(syn.toLowerCase()))
+        )
+      })
+    }
+
+    // Mood filter
+    if (filters.mood !== 'all') {
+      filtered = filtered.filter(catalogue => {
+        const catalogueText = `${catalogue.title} ${catalogue.description || ''}`.toLowerCase()
+        const mood = MOOD_DEFINITIONS[filters.mood]
+        return mood && (
+          catalogueText.includes(mood.name.toLowerCase()) ||
+          mood.synonyms.some(syn => catalogueText.includes(syn.toLowerCase()))
+        )
+      })
+    }
+
+    // Color palette filter
+    if (filters.colorPalette !== 'all') {
+      filtered = filtered.filter(catalogue => {
+        const catalogueText = `${catalogue.title} ${catalogue.description || ''}`.toLowerCase()
+        const color = COLOR_DEFINITIONS[filters.colorPalette]
+        return color && (
+          catalogueText.includes(color.name.toLowerCase()) ||
+          color.synonyms.some(syn => catalogueText.includes(syn.toLowerCase()))
+        )
+      })
+    }
+
+    // Popularity filter
+    if (filters.popularity !== 'all') {
+      filtered = filtered.filter(catalogue => {
+        switch (filters.popularity) {
+          case 'trending':
+            return catalogue.like_count > 5 || catalogue.view_count > 50
+          case 'classic':
+            return catalogue.created_at < new Date(Date.now() - 365 * 24 * 60 * 60 * 1000).toISOString()
+          case 'emerging':
+            return catalogue.created_at > new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString() &&
+                   catalogue.like_count < 10
+          default:
+            return true
+        }
+      })
+    }
+
+    // Market value filter
+    if (filters.marketValue !== 'all') {
+      filtered = filtered.filter(catalogue => {
+        switch (filters.marketValue) {
+          case 'high':
+            return catalogue.like_count > 20
+          case 'medium':
+            return catalogue.like_count > 5 && catalogue.like_count <= 20
+          case 'low':
+            return catalogue.like_count <= 5
+          default:
+            return true
+        }
+      })
     }
 
     // Date range filter
@@ -160,13 +231,13 @@ const BrowseCataloguesPage: React.FC = () => {
     })
 
     setFilteredCatalogues(filtered)
-  }
+  }, [catalogues, searchQuery, sortBy, filters])
 
-  const handleLike = async (catalogueId: string) => {
+  const handleLike = async () => {
     try {
       // TODO: Implement like functionality
       toast.success('Added to favorites')
-    } catch (err) {
+    } catch {
       toast.error('Failed to update favorites')
     }
   }
@@ -184,7 +255,7 @@ const BrowseCataloguesPage: React.FC = () => {
         await navigator.clipboard.writeText(url)
         toast.success('Link copied to clipboard!')
       }
-    } catch (err) {
+    } catch {
       toast.error('Failed to share catalogue')
     }
   }
@@ -278,7 +349,7 @@ const BrowseCataloguesPage: React.FC = () => {
           <div className="catalogues-sort">
             <select
               value={sortBy}
-              onChange={(e) => setSortBy(e.target.value as any)}
+              onChange={(e) => setSortBy(e.target.value as 'newest' | 'oldest' | 'most_viewed' | 'most_liked' | 'alphabetical')}
               className="catalogues-sort-select"
             >
               <option value="newest">Newest First</option>
@@ -295,25 +366,12 @@ const BrowseCataloguesPage: React.FC = () => {
       {showFilters && (
         <div className="catalogues-filters-panel">
           <div className="catalogues-filters-content">
-            <div className="catalogues-filter-group">
-              <label className="catalogues-filter-label">Access Type</label>
-              <select
-                value={filters.accessType}
-                onChange={(e) => setFilters(prev => ({ ...prev, accessType: e.target.value as any }))}
-                className="catalogues-filter-select"
-              >
-                <option value="all">All Access Types</option>
-                <option value="public">Public Only</option>
-                <option value="password_protected">Password Protected</option>
-                <option value="private">Private Only</option>
-              </select>
-            </div>
 
             <div className="catalogues-filter-group">
               <label className="catalogues-filter-label">Date Range</label>
               <select
                 value={filters.dateRange}
-                onChange={(e) => setFilters(prev => ({ ...prev, dateRange: e.target.value as any }))}
+                onChange={(e) => setFilters(prev => ({ ...prev, dateRange: e.target.value as 'all' | 'today' | 'week' | 'month' | 'year' }))}
                 className="catalogues-filter-select"
               >
                 <option value="all">All Time</option>
@@ -321,6 +379,76 @@ const BrowseCataloguesPage: React.FC = () => {
                 <option value="week">This Week</option>
                 <option value="month">This Month</option>
                 <option value="year">This Year</option>
+              </select>
+            </div>
+
+            <div className="catalogues-filter-group">
+              <label className="catalogues-filter-label">Art Style</label>
+              <select
+                value={filters.artStyle}
+                onChange={(e) => setFilters(prev => ({ ...prev, artStyle: e.target.value }))}
+                className="catalogues-filter-select"
+              >
+                <option value="all">All Styles</option>
+                {Object.values(ART_STYLES).map(style => (
+                  <option key={style.id} value={style.id}>{style.name}</option>
+                ))}
+              </select>
+            </div>
+
+            <div className="catalogues-filter-group">
+              <label className="catalogues-filter-label">Mood</label>
+              <select
+                value={filters.mood}
+                onChange={(e) => setFilters(prev => ({ ...prev, mood: e.target.value }))}
+                className="catalogues-filter-select"
+              >
+                <option value="all">All Moods</option>
+                {Object.values(MOOD_DEFINITIONS).map(mood => (
+                  <option key={mood.name} value={mood.name}>{mood.name}</option>
+                ))}
+              </select>
+            </div>
+
+            <div className="catalogues-filter-group">
+              <label className="catalogues-filter-label">Color Palette</label>
+              <select
+                value={filters.colorPalette}
+                onChange={(e) => setFilters(prev => ({ ...prev, colorPalette: e.target.value }))}
+                className="catalogues-filter-select"
+              >
+                <option value="all">All Colors</option>
+                {Object.values(COLOR_DEFINITIONS).map(color => (
+                  <option key={color.name} value={color.name}>{color.name}</option>
+                ))}
+              </select>
+            </div>
+
+            <div className="catalogues-filter-group">
+              <label className="catalogues-filter-label">Popularity</label>
+              <select
+                value={filters.popularity}
+                onChange={(e) => setFilters(prev => ({ ...prev, popularity: e.target.value as 'all' | 'trending' | 'classic' | 'emerging' }))}
+                className="catalogues-filter-select"
+              >
+                <option value="all">All</option>
+                <option value="trending">Trending</option>
+                <option value="classic">Classic</option>
+                <option value="emerging">Emerging</option>
+              </select>
+            </div>
+
+            <div className="catalogues-filter-group">
+              <label className="catalogues-filter-label">Market Value</label>
+              <select
+                value={filters.marketValue}
+                onChange={(e) => setFilters(prev => ({ ...prev, marketValue: e.target.value as 'all' | 'high' | 'medium' | 'low' }))}
+                className="catalogues-filter-select"
+              >
+                <option value="all">All Values</option>
+                <option value="high">High Value</option>
+                <option value="medium">Medium Value</option>
+                <option value="low">Low Value</option>
               </select>
             </div>
           </div>
@@ -355,7 +483,7 @@ const BrowseCataloguesPage: React.FC = () => {
                         <button
                           onClick={(e) => {
                             e.preventDefault()
-                            handleLike(catalogue.id)
+                            handleLike()
                           }}
                           className="catalogue-card-action"
                         >
@@ -443,7 +571,14 @@ const BrowseCataloguesPage: React.FC = () => {
               <button
                 onClick={() => {
                   setSearchQuery('')
-                  setFilters({ accessType: 'all', dateRange: 'all' })
+                  setFilters({ 
+                    dateRange: 'all',
+                    artStyle: 'all',
+                    mood: 'all',
+                    colorPalette: 'all',
+                    popularity: 'all',
+                    marketValue: 'all'
+                  })
                 }}
                 className="brush-button primary"
               >

@@ -1,11 +1,14 @@
 import React, { useState, useEffect } from 'react'
 import { Helmet } from 'react-helmet-async'
 import { useLocation, Link } from 'react-router-dom'
-import { Search, Filter, Grid, List, Camera, Sparkles, TrendingUp } from 'lucide-react'
-import FiltersSidebar, { MarketplaceFilters } from '../../components/marketplace/FiltersSidebar'
+import { Search, Grid, List, Camera } from 'lucide-react'
+import FiltersSidebar, { MarketplaceFilters } from '../../brush/components/marketplace/FiltersSidebar'
 import { SearchResult, ImageSearchResult } from '../../services/intelligentSearch'
-import ArtworkCard from '../../components/marketplace/ArtworkCard'
-import ArtistCard from '../../components/marketplace/ArtistCard'
+import ArtworkCard from '../../brush/components/marketplace/ArtworkCard'
+import ArtistCard from '../../brush/components/marketplace/ArtistCard'
+// Enhanced filtering libraries available for future use
+// import { ART_STYLES, STYLE_CATEGORIES, getStylesByCategory, findStyleSynonyms } from '@/lib/artStylesLibrary'
+// import { MOOD_DEFINITIONS, COLOR_DEFINITIONS, findMoodWords, findColorSynonyms } from '@/lib/colorLibrary'
 
 const SearchResultsPage: React.FC = () => {
   const location = useLocation()
@@ -13,8 +16,7 @@ const SearchResultsPage: React.FC = () => {
   const [imageResults, setImageResults] = useState<ImageSearchResult[]>([])
   const [searchType, setSearchType] = useState<'text' | 'image'>('text')
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState('')
+  const [loading] = useState(false)
   const [activeTab, setActiveTab] = useState<'artworks' | 'artists' | 'catalogues'>('artworks')
   const [compare, setCompare] = useState<Array<{ id: string; title: string; imageUrl?: string }>>([])
   const [filters, setFilters] = useState<MarketplaceFilters>({ availability: 'all' })
@@ -63,25 +65,25 @@ const SearchResultsPage: React.FC = () => {
       : imageResults.map(img => ({
           id: img.artworkId,
           type: 'artwork' as const,
-          title: img.metadata.title,
+          title: (img.metadata as any).title,
           description: '',
-          imageUrl: img.metadata.imageUrl,
+          imageUrl: (img.metadata as any).imageUrl,
           relevanceScore: img.similarityScore,
           metadata: img.metadata
         }))
 
     // apply filters
-    const filtered = artworks.filter((a: any) => {
-      const price = a.metadata.price || 0
+    const filtered = artworks.filter((a: SearchResult) => {
+      const price = (a.metadata as any).price || 0
       if (filters.priceMin != null && price < filters.priceMin) return false
       if (filters.priceMax != null && price > filters.priceMax) return false
-      if (filters.mediums && filters.mediums.length > 0 && a.metadata.medium && !filters.mediums.includes(a.metadata.medium)) return false
-      if (filters.availability === 'for_sale' && a.metadata.status && a.metadata.status !== 'for_sale') return false
-      if (filters.availability === 'sold' && a.metadata.status && a.metadata.status !== 'sold') return false
+      if (filters.mediums && filters.mediums.length > 0 && (a.metadata as any).medium && !filters.mediums.includes((a.metadata as any).medium)) return false
+      if (filters.availability === 'for_sale' && (a.metadata as any).status && (a.metadata as any).status !== 'for_sale') return false
+      if (filters.availability === 'sold' && (a.metadata as any).status && (a.metadata as any).status !== 'sold') return false
       // size buckets (use height_cm/width_cm if present)
       if (filters.size) {
-        const w = a.metadata.width_cm || 0
-        const h = a.metadata.height_cm || 0
+        const w = (a.metadata as any).width_cm || 0
+        const h = (a.metadata as any).height_cm || 0
         const maxDim = Math.max(w, h)
         if (filters.size === 'small' && maxDim > 50) return false
         if (filters.size === 'medium' && (maxDim <= 50 || maxDim > 120)) return false
@@ -138,17 +140,17 @@ const SearchResultsPage: React.FC = () => {
               artwork={{
                 id: artwork.id,
                 title: artwork.title,
-                price: artwork.metadata.price,
+                price: (artwork.metadata as any).price,
                 primaryImageUrl: artwork.imageUrl,
-                artist: artwork.metadata.artist,
-                genre: artwork.metadata.genre,
-                medium: artwork.metadata.medium,
-                dominantColors: artwork.metadata.dominantColors,
-                createdAt: artwork.metadata.createdAt
+                artist: (artwork.metadata as any).artist,
+                // genre: artwork.metadata.genre,
+                medium: (artwork.metadata as any).medium,
+                // dominantColors: artwork.metadata.dominantColors,
+                // createdAt: artwork.metadata.createdAt
               }}
-              viewMode={viewMode}
-              showRelevanceScore={true}
-              relevanceScore={artwork.relevanceScore}
+              // viewMode={viewMode}
+              // showRelevanceScore={true}
+              // relevanceScore={artwork.relevanceScore}
             />
           </div>
         ))}
@@ -185,12 +187,12 @@ const SearchResultsPage: React.FC = () => {
                 id: artist.id,
                 name: artist.title,
                 bio: artist.description,
-                avatarUrl: artist.metadata.avatarUrl,
-                artworkCount: artist.metadata.artworkCount || 0,
-                followersCount: artist.metadata.followersCount || 0
+                avatarUrl: (artist.metadata as any).avatarUrl,
+                artworkCount: (artist.metadata as any).artworkCount || 0,
+                slug: artist.id
               }}
-              showRelevanceScore={true}
-              relevanceScore={artist.relevanceScore}
+              // showRelevanceScore={true}
+              // relevanceScore={artist.relevanceScore}
             />
           ))}
         </div>
@@ -271,14 +273,14 @@ const SearchResultsPage: React.FC = () => {
                   color: 'var(--muted)',
                   margin: '0 0 var(--space-sm) 0'
                 }}>
-                  by {catalogue.metadata.artist?.name || 'Unknown Artist'}
+                  by {(catalogue.metadata as any).artist?.name || 'Unknown Artist'}
                 </p>
                 <p style={{
                   fontSize: '14px',
                   color: 'var(--muted)',
                   margin: '0 0 var(--space-md) 0'
                 }}>
-                  {catalogue.metadata.artworkCount} artworks
+                  {(catalogue.metadata as any).artworkCount} artworks
                 </p>
                 {catalogue.relevanceScore > 0 && (
                   <div style={{
@@ -384,7 +386,7 @@ const SearchResultsPage: React.FC = () => {
                 <div style={{
                   aspectRatio: '16/9',
                   backgroundColor: 'var(--border)',
-                  backgroundImage: result.metadata.imageUrl ? `url(${result.metadata.imageUrl})` : 'none',
+                  backgroundImage: (result.metadata as any).imageUrl ? `url(${(result.metadata as any).imageUrl})` : 'none',
                   backgroundSize: 'cover',
                   backgroundPosition: 'center',
                   position: 'relative'
@@ -411,7 +413,7 @@ const SearchResultsPage: React.FC = () => {
                     margin: '0 0 var(--space-sm) 0',
                     color: 'var(--fg)'
                   }}>
-                    {result.metadata.title}
+                    {(result.metadata as any).title}
                   </h4>
                   
                   <p style={{
@@ -419,7 +421,7 @@ const SearchResultsPage: React.FC = () => {
                     color: 'var(--muted)',
                     margin: '0 0 var(--space-md) 0'
                   }}>
-                    by {result.metadata.artist?.name || 'Unknown Artist'}
+                    by {(result.metadata as any).artist?.name || 'Unknown Artist'}
                   </p>
                   
                   <div style={{
@@ -433,7 +435,7 @@ const SearchResultsPage: React.FC = () => {
                       fontWeight: '600',
                       color: 'var(--primary)'
                     }}>
-                      ${result.metadata.price || 'Price on request'}
+                      ${(result.metadata as any).price || 'Price on request'}
                     </span>
                     <span style={{
                       fontSize: '12px',
@@ -441,7 +443,7 @@ const SearchResultsPage: React.FC = () => {
                       textTransform: 'uppercase',
                       letterSpacing: '0.5px'
                     }}>
-                      {result.metadata.medium}
+                      {(result.metadata as any).medium}
                     </span>
                   </div>
                   
@@ -593,7 +595,12 @@ const SearchResultsPage: React.FC = () => {
         {/* Layout: sidebar + content */}
         <div style={{ display: 'grid', gridTemplateColumns: searchType === 'text' ? '280px 1fr' : '1fr', gap: 'var(--space-xl)' }}>
           {searchType === 'text' && (
-            <FiltersSidebar value={filters} onChange={setFilters} />
+            <FiltersSidebar 
+              value={filters} 
+              onChange={(key: string, value: unknown) => {
+                setFilters(prev => ({ ...prev, [key]: value }))
+              }} 
+            />
           )}
 
           <div>
@@ -612,14 +619,14 @@ const SearchResultsPage: React.FC = () => {
             ].map(tab => (
               <button
                 key={tab.key}
-                onClick={() => setActiveTab(tab.key as any)}
+                onClick={() => setActiveTab(tab.key as 'artworks' | 'artists' | 'catalogues')}
                 style={{
                   padding: 'var(--space-sm) 0',
                   border: 'none',
                   background: 'none',
                   cursor: 'pointer',
-                  color: activeTab === (tab.key as any) ? 'var(--primary)' : 'var(--fg)',
-                  borderBottom: activeTab === (tab.key as any) ? '2px solid var(--primary)' : '2px solid transparent',
+                  color: activeTab === (tab.key as 'artworks' | 'artists' | 'catalogues') ? 'var(--primary)' : 'var(--fg)',
+                  borderBottom: activeTab === (tab.key as 'artworks' | 'artists' | 'catalogues') ? '2px solid var(--primary)' : '2px solid transparent',
                   fontWeight: 600
                 }}
               >

@@ -3,7 +3,7 @@ import { Helmet } from 'react-helmet-async'
 import { Link } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../contexts/AuthProvider'
-import Container from "../brush/components/forms/Container"
+import Container from "../../brush/components/forms/Container"
 import { showErrorToast, showSuccessToast } from '../../utils/errorHandling'
 import Icon from "../../brush/Icon"
 
@@ -63,23 +63,26 @@ const FavoritesPage: React.FC = () => {
 
       if (error) throw error
 
-      const processedFavorites: FavoriteArtwork[] = (data || []).map(favorite => ({
-        id: favorite.artworks.id,
-        title: favorite.artworks.title || 'Untitled',
-        artist: {
-          name: favorite.artworks.profiles?.display_name || 'Unknown Artist',
-          slug: favorite.artworks.profiles?.slug || '',
-          avatar_url: favorite.artworks.profiles?.avatar_url
-        },
-        primary_image_url: favorite.artworks.primary_image_url || '',
-        price: favorite.artworks.price || 0,
-        currency: favorite.artworks.currency || 'ZAR',
-        medium: favorite.artworks.medium || '',
-        year: favorite.artworks.year || new Date().getFullYear(),
-        dimensions: favorite.artworks.dimensions,
-        genre: favorite.artworks.genre || '',
-        favorited_at: favorite.created_at
-      }))
+      const processedFavorites: FavoriteArtwork[] = (data || []).map(favorite => {
+        const artwork = favorite.artworks?.[0] || favorite.artworks
+        return {
+          id: artwork?.id || 'unknown',
+          title: artwork?.title || 'Untitled',
+          artist: {
+            name: artwork?.profiles?.[0]?.display_name || 'Unknown Artist',
+            slug: artwork?.profiles?.[0]?.slug || '',
+            avatar_url: artwork?.profiles?.[0]?.avatar_url
+          },
+          primary_image_url: artwork?.primary_image_url || '',
+          price: artwork?.price || 0,
+          currency: artwork?.currency || 'ZAR',
+          medium: artwork?.medium || '',
+          year: artwork?.year || new Date().getFullYear(),
+          dimensions: artwork?.dimensions as string | null,
+          genre: artwork?.genre || '',
+          favorited_at: favorite.created_at
+        }
+      })
 
       setFavorites(processedFavorites)
     } catch (error) {

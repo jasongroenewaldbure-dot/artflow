@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { Helmet } from 'react-helmet-async'
 import { Link } from 'react-router-dom'
 import { Search, Filter, Grid, List, Plus, Users, Calendar, MapPin } from 'lucide-react'
+import { supabase } from '@/lib/supabase'
 
 interface Catalogue {
   id: string
@@ -26,6 +27,7 @@ interface Catalogue {
 const CataloguesPage: React.FC = () => {
   const [catalogues, setCatalogues] = useState<Catalogue[]>([])
   const [filteredCatalogues, setFilteredCatalogues] = useState<Catalogue[]>([])
+  const [collections, setCollections] = useState<Catalogue[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [searchQuery, setSearchQuery] = useState('')
@@ -89,6 +91,7 @@ const CataloguesPage: React.FC = () => {
 
         setCatalogues(formattedCollections)
         setFilteredCatalogues(formattedCollections)
+        setCollections(formattedCollections)
       } catch (e: any) {
         setError(e.message || 'Failed to load collections')
       } finally {

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { Helmet } from 'react-helmet-async'
+import { supabase } from '../../lib/supabase'
 import { 
   BarChart3, 
   TrendingUp, 
@@ -9,9 +10,9 @@ import {
   Share2, 
   DollarSign, 
   Target,
-  Globe,
-  Smartphone,
-  Calendar,
+  // Globe,
+  // Smartphone,
+  // Calendar,
   Zap,
   AlertCircle,
   CheckCircle,
@@ -19,7 +20,7 @@ import {
   ArrowDown,
   Minus
 } from 'lucide-react'
-import { analytics } from '../../services/analytics'
+// import { analytics } from '../../services/analytics'
 
 interface ArtistInsightsProps {
   artistId: string
@@ -126,14 +127,10 @@ const MetricCard: React.FC<MetricCardProps> = ({
 }
 
 const ArtistInsights: React.FC<ArtistInsightsProps> = ({ artistId }) => {
-  const [insights, setInsights] = useState<any>(null)
+  const [insights, setInsights] = useState<unknown>(null)
   const [loading, setLoading] = useState(true)
   const [period, setPeriod] = useState<'7d' | '30d' | '90d' | '1y'>('30d')
   const [activeTab, setActiveTab] = useState<'overview' | 'traffic' | 'engagement' | 'sales' | 'referrals' | 'content' | 'audience'>('overview')
-
-  useEffect(() => {
-    loadInsights()
-  }, [artistId, period])
 
   const loadInsights = async () => {
     try {
@@ -141,96 +138,45 @@ const ArtistInsights: React.FC<ArtistInsightsProps> = ({ artistId }) => {
       
       // Fetch real insights data from the database
       const { data: insightsData, error } = await supabase
-        .from('artist_insights')
+        .from('artworks')
         .select(`
-          *,
-          artworks!artworks_user_id_fkey(
-            id,
-            title,
-            price,
-            status,
-            created_at,
-            artwork_metrics(*)
-          )
+          id,
+          title,
+          created_at,
+          views_count,
+          likes_count,
+          shares_count,
+          sales_count,
+          price
         `)
         .eq('artist_id', artistId)
-        .eq('period', period)
-        .single()
-
-      if (error) {
-        if (error.code === 'PGRST116') {
-          // No insights data yet, create initial record
-          const { data: newInsights, error: createError } = await supabase
-            .from('artist_insights')
-            .insert([{
-              artist_id: artistId,
-              period: period,
-              metrics: {
-                total_views: 0,
-                unique_viewers: 0,
-                page_views: 0,
-                artwork_views: 0,
-                catalogue_views: 0,
-                profile_views: 0,
-                likes: 0,
-                shares: 0,
-                saves: 0,
-                follows: 0,
-                unfollows: 0,
-                inquiries: 0,
-                conversations: 0,
-                total_sales: 0,
-                revenue: 0,
-                average_sale_price: 0,
-                conversion_rate: 0,
-                engagement_rate: 0,
-                reach: 0,
-                impressions: 0,
-                click_through_rate: 0,
-                bounce_rate: 0,
-                session_duration: 0,
-                pages_per_session: 0,
-                follower_growth: 0,
-                artwork_growth: 0,
-                revenue_growth: 0,
-                view_growth: 0
-              },
-              generated_at: new Date().toISOString()
-            }])
-            .select()
-            .single()
-
-          if (createError) {
-            console.error('Error creating insights:', createError)
-            setInsights(null)
-            return
-          }
-          
-          setInsights(newInsights)
-          return
-        }
-        throw error
+      
+      if (error) throw error
+      
+      // Process the data into insights format
+      const processedInsights = {
+        metrics: {
+          totalViews: insightsData?.reduce((sum, artwork) => sum + (artwork.views_count || 0), 0) || 0,
+          totalLikes: insightsData?.reduce((sum, artwork) => sum + (artwork.likes_count || 0), 0) || 0,
+          totalShares: insightsData?.reduce((sum, artwork) => sum + (artwork.shares_count || 0), 0) || 0,
+          totalSales: insightsData?.reduce((sum, artwork) => sum + (artwork.sales_count || 0), 0) || 0,
+          totalRevenue: insightsData?.reduce((sum, artwork) => sum + ((artwork.price || 0) * (artwork.sales_count || 0)), 0) || 0
+        },
+        period: period,
+        generatedAt: new Date().toISOString()
       }
-
-      setInsights(insightsData)
+      
+      setInsights(processedInsights)
     } catch (error) {
       console.error('Error loading insights:', error)
-      setInsights(null)
     } finally {
       setLoading(false)
     }
   }
 
-  const tabs = [
-    { id: 'overview', label: 'Overview', icon: <BarChart3 size={16} /> },
-    { id: 'traffic', label: 'Traffic', icon: <Eye size={16} /> },
-    { id: 'engagement', label: 'Engagement', icon: <Heart size={16} /> },
-    { id: 'sales', label: 'Sales', icon: <DollarSign size={16} /> },
-    { id: 'referrals', label: 'Referrals', icon: <Share2 size={16} /> },
-    { id: 'content', label: 'Content', icon: <Target size={16} /> },
-    { id: 'audience', label: 'Audience', icon: <Users size={16} /> }
-  ]
-
+  useEffect(() => {
+    loadInsights()
+  }, [artistId, period])
   if (loading) {
     return (
       <div style={{
@@ -359,7 +305,7 @@ const ArtistInsights: React.FC<ArtistInsightsProps> = ({ artistId }) => {
           {tabs.map(tab => (
             <button
               key={tab.id}
-              onClick={() => setActiveTab(tab.id as any)}
+              onClick={() => setActiveTab(tab.id as 'overview' | 'traffic' | 'engagement' | 'sales' | 'referrals' | 'content' | 'audience')}
               style={{
                 display: 'flex',
                 alignItems: 'center',

@@ -50,26 +50,26 @@ interface FilterOptions {
   naturalLanguageQuery: string
   
   // Basic filters
-  priceRange: string
+  priceRange: string[]
   priceType: 'fixed' | 'negotiable' | 'all'
   minPrice: number | null
   maxPrice: number | null
   useLearnedBudget: boolean
   
   // Artwork properties
-  genre: string
-  medium: string
-  rarity: string
-  condition: string
-  orientation: string
-  subject: string
+  genre: string[]
+  medium: string[]
+  rarity: string[]
+  condition: string[]
+  orientation: string[]
+  subject: string[]
   
   // Visual properties
   dominantColors: string[]
   colorGroups: string[]
   
   // Physical properties
-  size: string
+  size: string[]
   sizeType: 'predefined' | 'custom'
   minWidth: number | null
   maxWidth: number | null
@@ -77,17 +77,17 @@ interface FilterOptions {
   maxHeight: number | null
   
   // Location and framing
-  location: string
-  framingStatus: string
-  signatureStatus: string
+  location: string[]
+  framingStatus: string[]
+  signatureStatus: string[]
   
   // Authentication and documentation
-  hasCoA: boolean | null
-  year: number | null
-  yearRange: string
+  hasCoA: string[]
+  year: number | string[]
+  yearRange: string[]
   
   // Sorting
-  sortBy: string
+  sortBy: string[]
   sortDirection: 'asc' | 'desc'
   
   // User preferences (if logged in)
@@ -112,26 +112,26 @@ const ArtworksPage: React.FC = () => {
     naturalLanguageQuery: '',
     
     // Basic filters
-    priceRange: searchParams.get('price_range') || 'all',
+    priceRange: searchParams.get('price_range') ? [searchParams.get('price_range')!] : [],
     priceType: (searchParams.get('price_type') as 'fixed' | 'negotiable' | 'all') || 'all',
     minPrice: searchParams.get('min_price') ? parseFloat(searchParams.get('min_price')!) : null,
     maxPrice: searchParams.get('max_price') ? parseFloat(searchParams.get('max_price')!) : null,
     useLearnedBudget: searchParams.get('use_learned_budget') === 'true',
     
     // Artwork properties
-    genre: searchParams.get('genre') || 'all',
-    medium: searchParams.get('medium') || 'all',
-    rarity: searchParams.get('rarity') || 'all',
-    condition: searchParams.get('condition') || 'all',
-    orientation: searchParams.get('orientation') || 'all',
-    subject: searchParams.get('subject') || 'all',
+    genre: searchParams.get('genre') ? [searchParams.get('genre')!] : [],
+    medium: searchParams.get('medium') ? [searchParams.get('medium')!] : [],
+    rarity: searchParams.get('rarity') ? [searchParams.get('rarity')!] : [],
+    condition: searchParams.get('condition') ? [searchParams.get('condition')!] : [],
+    orientation: searchParams.get('orientation') ? [searchParams.get('orientation')!] : [],
+    subject: searchParams.get('subject') ? [searchParams.get('subject')!] : [],
     
     // Visual properties
     dominantColors: searchParams.get('colors') ? searchParams.get('colors')!.split(',') : [],
     colorGroups: searchParams.get('color_groups') ? searchParams.get('color_groups')!.split(',') : [],
     
     // Physical properties
-    size: searchParams.get('size') || 'all',
+    size: searchParams.get('size') ? [searchParams.get('size')!] : [],
     sizeType: (searchParams.get('size_type') as 'predefined' | 'custom') || 'predefined',
     minWidth: searchParams.get('min_width') ? parseFloat(searchParams.get('min_width')!) : null,
     maxWidth: searchParams.get('max_width') ? parseFloat(searchParams.get('max_width')!) : null,
@@ -139,17 +139,17 @@ const ArtworksPage: React.FC = () => {
     maxHeight: searchParams.get('max_height') ? parseFloat(searchParams.get('max_height')!) : null,
     
     // Location and framing
-    location: searchParams.get('location') || 'all',
-    framingStatus: searchParams.get('framing') || 'all',
-    signatureStatus: searchParams.get('signature') || 'all',
+    location: searchParams.get('location') ? [searchParams.get('location')!] : [],
+    framingStatus: searchParams.get('framing') ? [searchParams.get('framing')!] : [],
+    signatureStatus: searchParams.get('signature') ? [searchParams.get('signature')!] : [],
     
     // Authentication and documentation
-    hasCoA: searchParams.get('has_coa') ? searchParams.get('has_coa') === 'true' : null,
-    year: searchParams.get('year') ? parseInt(searchParams.get('year')!) : null,
-    yearRange: searchParams.get('year_range') || 'all',
+    hasCoA: searchParams.get('has_coa') ? [searchParams.get('has_coa')!] : [],
+    year: searchParams.get('year') ? [searchParams.get('year')!] : [],
+    yearRange: searchParams.get('year_range') ? [searchParams.get('year_range')!] : [],
     
     // Sorting
-    sortBy: searchParams.get('sort') || 'newest',
+    sortBy: searchParams.get('sort') ? [searchParams.get('sort')!] : ['newest'],
     sortDirection: (searchParams.get('sort_direction') as 'asc' | 'desc') || 'desc',
     
     // User preferences
@@ -172,11 +172,18 @@ const ArtworksPage: React.FC = () => {
   useEffect(() => {
     // Update URL when filters change
     const params = new URLSearchParams()
-    if (filters.priceRange !== 'all') params.set('price_range', filters.priceRange)
-    if (filters.genre !== 'all') params.set('genre', filters.genre)
-    if (filters.medium !== 'all') params.set('medium', filters.medium)
-    if (filters.size !== 'all') params.set('size', filters.size)
-    if (filters.sortBy !== 'newest') params.set('sort', filters.sortBy)
+    if (filters.priceRange.length > 0) params.set('price_range', filters.priceRange[0])
+    if (filters.genre.length > 0) params.set('genre', filters.genre[0])
+    if (filters.medium.length > 0) params.set('medium', filters.medium[0])
+    if (filters.size.length > 0) params.set('size', filters.size[0])
+    if (filters.orientation.length > 0) params.set('orientation', filters.orientation[0])
+    if (filters.subject.length > 0) params.set('subject', filters.subject[0])
+    if (filters.condition.length > 0) params.set('condition', filters.condition[0])
+    if (filters.rarity.length > 0) params.set('rarity', filters.rarity[0])
+    if (filters.location.length > 0) params.set('location', filters.location[0])
+    if (filters.framingStatus.length > 0) params.set('framing', filters.framingStatus[0])
+    if (filters.signatureStatus.length > 0) params.set('signature', filters.signatureStatus[0])
+    if (filters.sortBy.length > 0 && filters.sortBy[0] !== 'newest') params.set('sort', filters.sortBy[0])
     if (searchQuery) params.set('q', searchQuery)
     
     setSearchParams(params, { replace: true })
@@ -289,8 +296,8 @@ const ArtworksPage: React.FC = () => {
     }
 
     // Price range filter
-    if (filters.priceRange !== 'all') {
-      const range = priceRanges.find(r => r.label === filters.priceRange)
+    if (filters.priceRange.length > 0) {
+      const range = priceRanges.find(r => r.label === filters.priceRange[0])
       if (range) {
         filtered = filtered.filter(artwork => {
           if (!artwork.price) return false
@@ -300,25 +307,61 @@ const ArtworksPage: React.FC = () => {
     }
 
     // Genre filter
-    if (filters.genre !== 'all') {
-      filtered = filtered.filter(artwork => artwork.genre === filters.genre)
+    if (filters.genre.length > 0) {
+      filtered = filtered.filter(artwork => artwork.genre && filters.genre.includes(artwork.genre))
     }
 
     // Medium filter
-    if (filters.medium !== 'all') {
-      filtered = filtered.filter(artwork => artwork.medium === filters.medium)
+    if (filters.medium.length > 0) {
+      filtered = filtered.filter(artwork => artwork.medium && filters.medium.includes(artwork.medium))
     }
 
     // Size filter
-    if (filters.size !== 'all') {
+    if (filters.size.length > 0) {
       filtered = filtered.filter(artwork => {
         const sizeCategory = getSizeCategory(artwork.dimensions)
-        return sizeCategory === filters.size
+        return filters.size.includes(sizeCategory)
       })
     }
 
+    // Orientation filter
+    if (filters.orientation.length > 0) {
+      filtered = filtered.filter(artwork => artwork.orientation && filters.orientation.includes(artwork.orientation))
+    }
+
+    // Subject filter
+    if (filters.subject.length > 0) {
+      filtered = filtered.filter(artwork => artwork.subject && filters.subject.includes(artwork.subject))
+    }
+
+    // Condition filter
+    if (filters.condition.length > 0) {
+      filtered = filtered.filter(artwork => artwork.condition && filters.condition.includes(artwork.condition))
+    }
+
+    // Rarity filter
+    if (filters.rarity.length > 0) {
+      filtered = filtered.filter(artwork => artwork.rarity && filters.rarity.includes(artwork.rarity))
+    }
+
+    // Location filter
+    if (filters.location.length > 0) {
+      filtered = filtered.filter(artwork => artwork.location && filters.location.includes(artwork.location))
+    }
+
+    // Framing status filter
+    if (filters.framingStatus.length > 0) {
+      filtered = filtered.filter(artwork => artwork.framing_status && filters.framingStatus.includes(artwork.framing_status))
+    }
+
+    // Signature status filter
+    if (filters.signatureStatus.length > 0) {
+      filtered = filtered.filter(artwork => artwork.signature_info && filters.signatureStatus.includes(artwork.signature_info.status))
+    }
+
     // Sort
-    switch (filters.sortBy) {
+    const sortBy = filters.sortBy[0] || 'newest'
+    switch (sortBy) {
       case 'newest':
         filtered.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
         break
@@ -358,26 +401,26 @@ const ArtworksPage: React.FC = () => {
       naturalLanguageQuery: '',
       
       // Basic filters
-      priceRange: 'all',
+      priceRange: [],
       priceType: 'all',
       minPrice: null,
       maxPrice: null,
       useLearnedBudget: false,
       
       // Artwork properties
-      genre: 'all',
-      medium: 'all',
-      rarity: 'all',
-      condition: 'all',
-      orientation: 'all',
-      subject: 'all',
+      genre: [],
+      medium: [],
+      rarity: [],
+      condition: [],
+      orientation: [],
+      subject: [],
       
       // Visual properties
       dominantColors: [],
       colorGroups: [],
       
       // Physical properties
-      size: 'all',
+      size: [],
       sizeType: 'predefined',
       minWidth: null,
       maxWidth: null,
@@ -385,17 +428,17 @@ const ArtworksPage: React.FC = () => {
       maxHeight: null,
       
       // Location and framing
-      location: 'all',
-      framingStatus: 'all',
-      signatureStatus: 'all',
+      location: [],
+      framingStatus: [],
+      signatureStatus: [],
       
       // Authentication and documentation
-      hasCoA: null,
-      year: null,
-      yearRange: 'all',
+      hasCoA: [],
+      year: [],
+      yearRange: [],
       
       // Sorting
-      sortBy: 'newest',
+      sortBy: ['newest'],
       sortDirection: 'desc',
       
       // User preferences
@@ -517,8 +560,8 @@ const ArtworksPage: React.FC = () => {
               <div className="filter-group">
                 <label>Price Range</label>
                 <select
-                  value={filters.priceRange}
-                  onChange={(e) => setFilters(prev => ({ ...prev, priceRange: e.target.value }))}
+                  value={filters.priceRange[0] || 'all'}
+                  onChange={(e) => setFilters(prev => ({ ...prev, priceRange: e.target.value ? [e.target.value] : [] }))}
                 >
                   <option value="all">All Prices</option>
                   {priceRanges.map((range, index) => (
@@ -531,8 +574,8 @@ const ArtworksPage: React.FC = () => {
               <div className="filter-group">
                 <label>Genre</label>
                 <select
-                  value={filters.genre}
-                  onChange={(e) => setFilters(prev => ({ ...prev, genre: e.target.value }))}
+                  value={filters.genre[0] || 'all'}
+                  onChange={(e) => setFilters(prev => ({ ...prev, genre: e.target.value ? [e.target.value] : [] }))}
                 >
                   <option value="all">All Genres</option>
                   {availableGenres.map(genre => (
@@ -545,8 +588,8 @@ const ArtworksPage: React.FC = () => {
               <div className="filter-group">
                 <label>Medium</label>
                 <select
-                  value={filters.medium}
-                  onChange={(e) => setFilters(prev => ({ ...prev, medium: e.target.value }))}
+                  value={filters.medium[0] || 'all'}
+                  onChange={(e) => setFilters(prev => ({ ...prev, medium: e.target.value ? [e.target.value] : [] }))}
                 >
                   <option value="all">All Mediums</option>
                   {availableMediums.map(medium => (
@@ -559,8 +602,8 @@ const ArtworksPage: React.FC = () => {
               <div className="filter-group">
                 <label>Size</label>
                 <select
-                  value={filters.size}
-                  onChange={(e) => setFilters(prev => ({ ...prev, size: e.target.value }))}
+                  value={filters.size[0] || 'all'}
+                  onChange={(e) => setFilters(prev => ({ ...prev, size: e.target.value ? [e.target.value] : [] }))}
                 >
                   <option value="all">All Sizes</option>
                   <option value="Small">Small</option>
@@ -574,8 +617,8 @@ const ArtworksPage: React.FC = () => {
               <div className="filter-group">
                 <label>Sort By</label>
                 <select
-                  value={filters.sortBy}
-                  onChange={(e) => setFilters(prev => ({ ...prev, sortBy: e.target.value }))}
+                  value={filters.sortBy[0] || 'newest'}
+                  onChange={(e) => setFilters(prev => ({ ...prev, sortBy: e.target.value ? [e.target.value] : [] }))}
                 >
                   <option value="newest">Newest First</option>
                   <option value="oldest">Oldest First</option>

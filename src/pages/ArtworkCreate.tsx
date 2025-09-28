@@ -6,24 +6,24 @@ import {
   X, 
   Plus, 
   Trash2, 
-  Edit3, 
+  // Edit3, 
   Save, 
   ArrowLeft,
-  Image as ImageIcon,
+  // Image as ImageIcon,
   Palette,
-  Ruler,
+  // Ruler,
   DollarSign,
-  Tag,
+  // Tag,
   FileText,
   Eye,
   EyeOff,
   Lock,
   Unlock,
-  Camera,
-  Wand2,
-  RotateCcw,
-  Move,
-  Crop
+  // Camera,
+  // Wand2,
+  // RotateCcw,
+  // Move,
+  // Crop
 } from 'lucide-react'
 
 interface ArtworkImage {
@@ -63,7 +63,7 @@ const ArtworkCreate: React.FC = () => {
   const navigate = useNavigate()
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [images, setImages] = useState<ArtworkImage[]>([])
-  const [isUploading, setIsUploading] = useState(false)
+  // const [isUploading, setIsUploading] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
   const [activeTab, setActiveTab] = useState<'basic' | 'details' | 'pricing' | 'visibility'>('basic')
   const [formData, setFormData] = useState<ArtworkFormData>({
@@ -164,14 +164,14 @@ const ArtworkCreate: React.FC = () => {
     }))
   }
 
-  const handleInputChange = (field: keyof ArtworkFormData, value: any) => {
+  const handleInputChange = (field: keyof ArtworkFormData, value: unknown) => {
     setFormData(prev => ({
       ...prev,
       [field]: value
     }))
   }
 
-  const handleDimensionChange = (field: keyof ArtworkFormData['dimensions'], value: any) => {
+  const handleDimensionChange = (field: keyof ArtworkFormData['dimensions'], value: unknown) => {
     setFormData(prev => ({
       ...prev,
       dimensions: {
@@ -341,7 +341,7 @@ const ArtworkCreate: React.FC = () => {
           {tabs.map(tab => (
             <button
               key={tab.id}
-              onClick={() => setActiveTab(tab.id as any)}
+              onClick={() => setActiveTab(tab.id as 'basic' | 'details' | 'pricing' | 'visibility')}
               className={`artwork-create-tab ${activeTab === tab.id ? 'artwork-create-tab--active' : ''}`}
             >
               {tab.icon}

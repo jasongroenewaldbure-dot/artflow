@@ -2,9 +2,9 @@ import React, { useState } from 'react'
 import { Helmet } from 'react-helmet-async'
 import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../contexts/AuthProvider'
-import Container from "../brush/components/forms/Container"
+import Container from "../../brush/components/forms/Container"
 import { showErrorToast, showSuccessToast } from '../../utils/errorHandling'
-import Icon from "../brush/Icon"
+import Icon from "../../brush/Icon"
 
 interface VaultAccessPageProps {
   onVerified: () => void

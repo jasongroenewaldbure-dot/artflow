@@ -3,9 +3,10 @@ import { Helmet } from 'react-helmet-async'
 import { useLocation } from 'react-router-dom'
 import { Sparkles, TrendingUp, Palette, Search, Settings, RefreshCw, Globe, User } from 'lucide-react'
 import { useAuth } from '../../contexts/AuthProvider'
-import AdvancedSearchInterface from '../../components/common/AdvancedSearchInterface'
-import LivePreferenceControls, { LivePreferences } from '../../components/common/LivePreferenceControls'
-import SerendipityEngine from '../../components/common/SerendipityEngine'
+import { AdvancedSearchInterface } from '../../brush/components'
+import { LivePreferenceControls } from '../../brush/components'
+import { UserLivePreferences } from '../../types'
+import { SerendipityEngine } from '../../brush/components'
 import Container from "../../brush/components/forms/Container"
 
 interface IntelligentExplorePageProps {}
@@ -21,7 +22,7 @@ const IntelligentExplorePage: React.FC<IntelligentExplorePageProps> = () => {
     ? 'AI-powered art discovery for everyone' 
     : 'Personalized recommendations and serendipitous discoveries'
   const [searchResults, setSearchResults] = useState<any[]>([])
-  const [preferences, setPreferences] = useState<LivePreferences>()
+  const [preferences, setPreferences] = useState<UserLivePreferences>()
   const [activeTab, setActiveTab] = useState<'discover' | 'serendipity' | 'personalized'>('discover')
   const [showAdvancedControls, setShowAdvancedControls] = useState(false)
   const [banditAnalytics, setBanditAnalytics] = useState<any>(null)
@@ -47,7 +48,7 @@ const IntelligentExplorePage: React.FC<IntelligentExplorePageProps> = () => {
     setActiveTab('discover')
   }
 
-  const handlePreferencesChange = (newPreferences: LivePreferences) => {
+  const handlePreferencesChange = (newPreferences: UserLivePreferences) => {
     setPreferences(newPreferences)
     // Trigger real-time search update if there are current results
     if (searchResults.length > 0) {
@@ -173,8 +174,19 @@ const IntelligentExplorePage: React.FC<IntelligentExplorePageProps> = () => {
         {showAdvancedControls && (
           <div className="advanced-controls">
             <LivePreferenceControls
-              onPreferencesChange={handlePreferencesChange}
-              initialPreferences={preferences}
+              onPreferencesChange={(prefs) => {
+                // Convert LivePreferences to UserLivePreferences
+                const userPrefs: UserLivePreferences = {
+                  paletteBias: 'neutral',
+                  priceSensitivity: 0.5,
+                  abstractionLevel: 0.5,
+                  discoveryMode: 0.5,
+                  sizeBias: 'any',
+                  mediumFocus: [],
+                  colorPreferences: []
+                }
+                handlePreferencesChange(userPrefs)
+              }}
             />
             
             {user && (
@@ -271,7 +283,6 @@ const IntelligentExplorePage: React.FC<IntelligentExplorePageProps> = () => {
           {activeTab === 'serendipity' && (
             <div className="serendipity-section">
               <SerendipityEngine
-                userId={user?.id}
                 limit={12}
                 onItemClick={handleSerendipityClick}
                 showReasons={true}
@@ -325,7 +336,7 @@ const IntelligentExplorePage: React.FC<IntelligentExplorePageProps> = () => {
           )}
         </div>
 
-        <style jsx>{`
+        <style>{`
           .intelligent-explore-page {
             max-width: 1200px;
             margin: 0 auto;

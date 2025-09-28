@@ -1,28 +1,28 @@
-import React, { useEffect, useState } from 'react'
+import React, { useState } from 'react'
 import { Helmet } from 'react-helmet-async'
 import { Link, useParams, useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { 
   Heart, 
   Share2, 
-  Eye, 
+  // Eye, 
   ArrowLeft, 
   Calendar, 
-  Ruler, 
+  // Ruler, 
   Palette, 
   User, 
   MapPin,
   ExternalLink,
   ChevronRight,
-  CheckCircle,
+  // CheckCircle,
   AlertCircle
 } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import LoadingSpinner from "../brush/components/feedback/LoadingSpinner"
 import ErrorMessage from "../brush/components/forms/ErrorMessage"
 import Container from "../brush/components/forms/Container"
-import { useAuth } from '@/contexts/AuthProvider'
-import toast from 'react-hot-toast'
+// import { useAuth } from '@/contexts/AuthProvider'
+// import toast from 'react-hot-toast'
 
 interface Artist {
   id: string
@@ -95,10 +95,10 @@ const fetchArtworkBySlug = async (slug: string): Promise<Artwork> => {
 const ArtworkDetail: React.FC = () => {
   const { artworkSlug } = useParams<{ artworkSlug: string }>()
   const navigate = useNavigate()
-  const { user } = useAuth()
+  // const { user } = useAuth()
   
   const [showInquiryModal, setShowInquiryModal] = useState(false)
-  const [isFavorited, setIsFavorited] = useState(false)
+  const [isFavorited] = useState(false)
 
   const { data: artwork, isLoading, isError, error } = useQuery({
     queryKey: ['artwork', artworkSlug],
