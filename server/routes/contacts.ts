@@ -4,7 +4,7 @@ import { requireAuth, getUserIdFromRequest } from '../middleware/auth'
 
 const router = Router()
 
-router.get('/contacts', requireAuth as any, async (req, res, next) => {
+router.get('/contacts', requireAuth, async (req, res, next) => {
   try {
     const userId = await getUserIdFromRequest(req)
     const { data, error } = await supabase
@@ -18,7 +18,7 @@ router.get('/contacts', requireAuth as any, async (req, res, next) => {
   } catch (e) { next(e) }
 })
 
-router.post('/contacts', requireAuth as any, async (req, res, next) => {
+router.post('/contacts', requireAuth, async (req, res, next) => {
   try {
     const userId = await getUserIdFromRequest(req)
     const body = await readJson(req)
@@ -32,7 +32,7 @@ router.post('/contacts', requireAuth as any, async (req, res, next) => {
   } catch (e) { next(e) }
 })
 
-router.patch('/contacts/:id', requireAuth as any, async (req, res, next) => {
+router.patch('/contacts/:id', requireAuth, async (req, res, next) => {
   try {
     const userId = await getUserIdFromRequest(req)
     const body = await readJson(req)
@@ -48,7 +48,7 @@ router.patch('/contacts/:id', requireAuth as any, async (req, res, next) => {
   } catch (e) { next(e) }
 })
 
-router.delete('/contacts/:id', requireAuth as any, async (req, res, next) => {
+router.delete('/contacts/:id', requireAuth, async (req, res, next) => {
   try {
     const userId = await getUserIdFromRequest(req)
     const { error } = await supabase
@@ -61,7 +61,7 @@ router.delete('/contacts/:id', requireAuth as any, async (req, res, next) => {
   } catch (e) { next(e) }
 })
 
-router.post('/contacts/:id/share-log', requireAuth as any, async (req, res, next) => {
+router.post('/contacts/:id/share-log', requireAuth, async (req, res, next) => {
   try {
     const userId = await getUserIdFromRequest(req)
     const contactId = req.params.id
@@ -74,7 +74,7 @@ router.post('/contacts/:id/share-log', requireAuth as any, async (req, res, next
   } catch (e) { next(e) }
 })
 
-async function readJson(req: any){
+async function readJson(req: { [Symbol.asyncIterator](): AsyncIterator<Buffer> }){
   const chunks: Buffer[] = []
   for await (const chunk of req) chunks.push(chunk)
   return JSON.parse(Buffer.concat(chunks).toString('utf-8') || '{}')

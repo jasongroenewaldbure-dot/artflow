@@ -19,7 +19,7 @@ export async function requireAuth(req: Request, res: Response, next: NextFunctio
   if (!userId) {
     return res.status(401).json({ error: 'Unauthorized' })
   }
-  ;(req as any).userId = userId
+  ;(req as unknown as { userId: string }).userId = userId
   next()
 }
 

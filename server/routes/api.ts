@@ -19,8 +19,8 @@ const UPLOAD_DIR = path.resolve(process.cwd(), 'uploads')
 fs.mkdirSync(UPLOAD_DIR, { recursive: true })
 
 const storage = multer.diskStorage({
-  destination: (_req: any, _file: any, cb: any) => cb(null, UPLOAD_DIR),
-  filename: (_req: any, file: any, cb: any) => {
+  destination: (_req: unknown, _file: unknown, cb: (error: Error | null, destination: string) => void) => cb(null, UPLOAD_DIR),
+  filename: (_req: unknown, file: { originalname: string }, cb: (error: Error | null, filename: string) => void) => {
     const id = nanoid(16)
     const ext = path.extname(file.originalname)
     cb(null, `${id}${ext}`)
@@ -83,7 +83,7 @@ router.get('/auth/me', (req, res) => {
   if (!userId) return res.status(401).json({ error: 'Unauthorized' })
   const me = users.get(userId)
   if (!me) return res.status(404).json({ error: 'Not found' })
-  const { passwordHash, ...safe } = me
+  const { passwordHash: _passwordHash, ...safe } = me
   res.json({ user: safe })
 })
 
@@ -100,7 +100,7 @@ router.post('/auth/me', async (req, res) => {
   if (body.name !== undefined) me.name = body.name
   if (body.role !== undefined) me.role = body.role
   users.set(userId, me)
-  const { passwordHash, ...safe } = me
+  const { passwordHash: _passwordHash, ...safe } = me
   res.json({ user: safe })
 })
 
@@ -141,13 +141,13 @@ router.get('/search', (req, res) => {
 })
 
 router.post('/analyze-image', upload.single('image'), async (req, res) => {
-  const file = req.file
+  const file = req.file as any
   if (!file) return res.status(400).json({ error: 'Image required' })
   const image = sharp(file.path)
   const stats = await image.stats()
   const channels = stats.channels
   const dominantHex = channels
-    .map(_c => {
+    .map((_c, _index) => {
       const r = channels[0]?.mean ?? 0
       const g = channels[1]?.mean ?? 0
       const b = channels[2]?.mean ?? 0

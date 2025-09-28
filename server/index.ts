@@ -35,7 +35,7 @@ async function createServer() {
   const ns = createNamespace('request');
   const logger = pino({ level: process.env.LOG_LEVEL || (isProd ? 'info' : 'debug') });
   app.use(pinoHttp({ logger, genReqId: (req) => (req.headers['x-request-id'] as string) || uuidv4() }));
-  app.use((req, _res, next) => ns.run(() => { ns.set('requestId', (req as any).id); next(); }));
+  app.use((req, _res, next) => ns.run(() => { ns.set('requestId', (req as { id: string }).id); next(); }));
 
   if (process.env.SENTRY_DSN) {
     Sentry.init({ dsn: process.env.SENTRY_DSN, tracesSampleRate: 0.1 });
@@ -49,7 +49,7 @@ async function createServer() {
   app.disable('x-powered-by');
   app.use(rateLimit({ windowMs: 60_000, max: 500 }));
   app.use((req, _res, next) => {
-    ;(req as any).cspNonce = Buffer.from(uuidv4()).toString('base64');
+    ;(req as unknown as { cspNonce: string }).cspNonce = Buffer.from(uuidv4()).toString('base64');
     next();
   });
 
@@ -62,14 +62,14 @@ async function createServer() {
   const resolve = (p: string) => path.resolve(process.cwd(), p);
   const indexHtmlPath = resolve('index.html');
 
-  let vite: any;
+  let vite: { ssrLoadModule: (id: string) => Promise<unknown>; transformIndexHtml: (url: string, html: string) => Promise<string>; middlewares: unknown; ssrFixStacktrace: (error: Error) => void } | null;
   if (!isProd) {
     const viteCreateServer = await import('vite');
     vite = await viteCreateServer.createServer({
       server: { middlewareMode: true },
       appType: 'custom'
     });
-    app.use(vite.middlewares);
+    app.use(vite!.middlewares as any);
   } else {
     app.use('/assets', express.static(resolve('dist/client/assets'), { maxAge: '1y', immutable: true }));
     app.use(express.static(resolve('dist/client'), { index: false }));
@@ -90,8 +90,8 @@ async function createServer() {
   async function render(url: string, nonce: string) {
     if (!isProd) {
       const template = fs.readFileSync(indexHtmlPath, 'utf-8');
-      const transformed = await vite.transformIndexHtml(url, template);
-      const { render } = await vite.ssrLoadModule('/src/entry-server.tsx');
+      const transformed = await vite!.transformIndexHtml(url, template);
+      const { render } = await vite!.ssrLoadModule('/src/entry-server.tsx') as { render: (url: string) => { html: string; head: string } };
       const { html, head } = await render(url);
       return transformed
         .replace('<!--ssr-outlet-->', html)
@@ -99,8 +99,7 @@ async function createServer() {
         .replace('<script type="module"', `<script nonce="${nonce}" type="module"`);
     } else {
       const template = fs.readFileSync(resolve('dist/client/index.html'), 'utf-8');
-      // eslint-disable-next-line @typescript-eslint/no-var-requires
-      const { render } = require(resolve('dist/server/entry-server.js'));
+      const { render } = await import(resolve('dist/server/entry-server.js'));
       const { html, head } = await render(url);
       return template
         .replace('<!--ssr-outlet-->', html)
@@ -117,7 +116,7 @@ async function createServer() {
       res.status(200).set({ 'Content-Type': 'text/html' }).end(html);
     } catch (e: unknown) {
       const error = e as Error;
-      if (!isProd && vite) vite.ssrFixStacktrace(error);
+      if (!isProd && vite) vite!.ssrFixStacktrace(error);
       next(error);
     }
   });

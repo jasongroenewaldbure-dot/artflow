@@ -5,7 +5,7 @@ import { requireAuth, getUserIdFromRequest } from '../middleware/auth'
 const router = Router()
 
 // Recompute learned preferences for the current user (can be scheduled externally)
-router.post('/admin/recompute-learned', requireAuth as any, async (req, res, next) => {
+router.post('/admin/recompute-learned', requireAuth, async (req, res, next) => {
   try {
     const userId = await getUserIdFromRequest(req)
     if (!userId) return res.status(401).json({ error: 'Unauthorized' })
@@ -14,11 +14,11 @@ router.post('/admin/recompute-learned', requireAuth as any, async (req, res, nex
       supabase.from('artwork_views').select('artwork_id').eq('viewer_id', userId),
       supabase.from('sales').select('artwork_id'),
     ])
-    const artworkIds = Array.from(new Set([...(likes||[]).map((r:any)=>r.artwork_id), ...(views||[]).map((v:any)=>v.artwork_id), ...(sales||[]).map((s:any)=>s.artwork_id)]))
+    const artworkIds = Array.from(new Set([...(likes||[]).map((r: { artwork_id: string })=>r.artwork_id), ...(views||[]).map((v: { artwork_id: string })=>v.artwork_id), ...(sales||[]).map((s: { artwork_id: string })=>s.artwork_id)]))
     const { data: arts } = await supabase.from('artworks').select('medium,genre,price').in('id', artworkIds)
-    const mediums = tally((arts||[]).map((a:any)=>a.medium).filter(Boolean))
-    const styles = tally((arts||[]).map((a:any)=>a.genre).filter(Boolean))
-    const prices = (arts||[]).map((a:any)=>a.price).filter((n:any)=>typeof n==='number')
+    const mediums = tally((arts||[]).map((a: { medium: string })=>a.medium).filter(Boolean))
+    const styles = tally((arts||[]).map((a: { genre: string })=>a.genre).filter(Boolean))
+    const prices = (arts||[]).map((a: { price: number })=>a.price).filter((n: number)=>typeof n==='number')
     const learned = {
       top_liked_mediums: entries(mediums),
       top_liked_styles: entries(styles),
