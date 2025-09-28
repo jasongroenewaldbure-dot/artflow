@@ -3,7 +3,11 @@ import { Outlet } from 'react-router-dom'
 import Sidebar from '../navigation/Sidebar'
 import TopHeader from '../navigation/TopHeader'
 
-const LoggedInLayout: React.FC = () => {
+interface LoggedInLayoutProps {
+  children?: React.ReactNode
+}
+
+const LoggedInLayout: React.FC<LoggedInLayoutProps> = ({ children }) => {
   return (
     <div style={{
       minHeight: '100vh',
@@ -30,7 +34,7 @@ const LoggedInLayout: React.FC = () => {
           padding: '24px',
           backgroundColor: '#ffffff'
         }}>
-          <Outlet />
+          {children || <Outlet />}
         </main>
       </div>
     </div>

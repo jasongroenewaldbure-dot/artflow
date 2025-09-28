@@ -1,13 +1,13 @@
 import React, { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { supabase } from '../../../lib/supabase'
-import BrushIcon from '../../Icon'
+// import BrushIcon from '../../Icon'
 import BrushButton from '../Button'
 import LoadingSpinner from '../feedback/LoadingSpinner'
 import ErrorMessage from '../forms/ErrorMessage'
 
 interface SystemCatalogueProps {
-  onArtworkSelect?: (artwork: any) => void
+  onArtworkSelect?: (artwork: unknown) => void
   onClose?: () => void
 }
 
@@ -28,7 +28,7 @@ interface Artwork {
 }
 
 const SystemCatalogue: React.FC<SystemCatalogueProps> = ({ onArtworkSelect, onClose }) => {
-  const [selectedArtworks, setSelectedArtworks] = useState<string[]>([])
+  const [selectedArtworks] = useState<string[]>([])
   const [filters, setFilters] = useState({
     medium: '',
     priceRange: '',
@@ -64,13 +64,13 @@ const SystemCatalogue: React.FC<SystemCatalogueProps> = ({ onArtworkSelect, onCl
     }
   })
 
-  const handleArtworkToggle = (artworkId: string) => {
-    setSelectedArtworks(prev => 
-      prev.includes(artworkId)
-        ? prev.filter(id => id !== artworkId)
-        : [...prev, artworkId]
-    )
-  }
+  // const handleArtworkToggle = (artworkId: string) => {
+  //   setSelectedArtworks(prev => 
+  //     prev.includes(artworkId)
+  //       ? prev.filter(id => id !== artworkId)
+  //       : [...prev, artworkId]
+  //   )
+  // }
 
   const handleSelectArtwork = (artwork: Artwork) => {
     if (onArtworkSelect) {
@@ -228,7 +228,7 @@ const SystemCatalogue: React.FC<SystemCatalogueProps> = ({ onArtworkSelect, onCl
                 color: 'var(--muted)',
                 margin: '0 0 var(--space-sm) 0'
               }}>
-                by {artwork.profiles?.display_name || 'Unknown Artist'}
+                by {artwork.profiles?.[0]?.display_name || 'Unknown Artist'}
               </p>
               {artwork.price && (
                 <p style={{

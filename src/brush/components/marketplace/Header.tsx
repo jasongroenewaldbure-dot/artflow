@@ -1,12 +1,12 @@
 import React, { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Search, User, Bell, Menu, X } from 'lucide-react'
+import { User, Bell, Menu, X } from 'lucide-react'
 import { useAuth } from '../../../contexts/AuthProvider'
-import BrushIcon from '../../Icon'
+// import BrushIcon from '../../Icon'
 
 const Header: React.FC = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
-  const { user, signOut } = useAuth()
+  const { signOut } = useAuth()
 
   return (
     <header style={{

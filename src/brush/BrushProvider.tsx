@@ -1,5 +1,11 @@
-import { type ReactNode, useEffect, createContext, useContext, useState } from 'react'
+import { type ReactNode, useEffect, createContext, useContext, useState, lazy } from 'react'
 import './theme.css'
+
+// Lazy load components
+const Button = lazy(() => import('./components/Button'))
+const Card = lazy(() => import('./components/Card'))
+const Icon = lazy(() => import('./Icon'))
+const Input = lazy(() => import('./components/forms/Input'))
 
 interface BrushTheme {
   mode: 'light' | 'dark'
@@ -13,10 +19,10 @@ interface BrushContextType {
   setTheme: (theme: Partial<BrushTheme>) => void
   components: {
     // Component registry for design system
-    Button: React.ComponentType<any>
-    Card: React.ComponentType<any>
-    Icon: React.ComponentType<any>
-    Input: React.ComponentType<any>
+    Button: React.ComponentType<Record<string, unknown>>
+    Card: React.ComponentType<Record<string, unknown>>
+    Icon: React.ComponentType<Record<string, unknown>>
+    Input: React.ComponentType<Record<string, unknown>>
     // Add more as needed
   }
 }
@@ -58,16 +64,16 @@ export function BrushProvider({ children }: { children: ReactNode }) {
 
   // Component registry for design system
   const components = {
-    Button: () => import('./components/Button'),
-    Card: () => import('./components/Card'),
-    Icon: () => import('./Icon'),
-    Input: () => import('./components/forms/Input'),
+    Button,
+    Card,
+    Icon,
+    Input,
   }
 
   const contextValue: BrushContextType = {
     theme,
     setTheme,
-    components
+    components: components as unknown as BrushContextType['components']
   }
 
   return (

@@ -1,6 +1,6 @@
 import React from 'react'
 import { Link, useLocation } from 'react-router-dom'
-import { Star, Bell, Plus } from 'lucide-react'
+import { Star } from 'lucide-react'
 import { useAuth } from '../../../contexts/AuthProvider'
 
 interface NavItem {

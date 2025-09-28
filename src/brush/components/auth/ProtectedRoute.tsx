@@ -42,7 +42,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
     }
   }
 
-  if (requiredRole && profile?.role !== requiredRole) {
+  if (requiredRole && profile?.role && profile.role.toUpperCase() !== requiredRole) {
     return <Navigate to="/u/dashboard" replace />
   }
 

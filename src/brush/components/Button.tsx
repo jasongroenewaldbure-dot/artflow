@@ -1,103 +1,152 @@
 import React from 'react'
+import { tokens } from '../palette-tokens'
 
-interface BrushButtonProps {
-  children: React.ReactNode
-  variant?: 'primary' | 'secondary' | 'outline' | 'ghost' | 'danger'
-  size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl'
-  disabled?: boolean
+export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+  variant?: 'primary' | 'secondary' | 'tertiary' | 'ghost' | 'danger' | 'outline'
+  size?: 'sm' | 'md' | 'lg'
   loading?: boolean
+  disabled?: boolean
   icon?: string
-  iconPosition?: 'left' | 'right'
-  fullWidth?: boolean
-  onClick?: () => void
-  type?: 'button' | 'submit' | 'reset'
-  className?: string
-  style?: React.CSSProperties
+  children: React.ReactNode
 }
 
-/**
- * Brush Design System Button Component
- */
-export const BrushButton: React.FC<BrushButtonProps> = ({
-  children,
+export const Button: React.FC<ButtonProps> = ({
   variant = 'primary',
   size = 'md',
-  disabled = false,
   loading = false,
-  fullWidth = false,
-  onClick,
-  type = 'button',
+  disabled = false,
+  // icon,
+  children,
   className = '',
-  style = {}
+  ...props
 }) => {
-  const baseClasses = [
-    'brush-button',
-    `brush-button--${variant}`,
-    `brush-button--${size}`,
-    disabled && 'brush-button--disabled',
-    loading && 'brush-button--loading',
-    fullWidth && 'brush-button--full-width',
-    className
-  ].filter(Boolean).join(' ')
-
-  const buttonStyle: React.CSSProperties = {
-    padding: `var(--button-padding-${size})`,
-    fontSize: `var(--button-font-size-${size})`,
-    borderRadius: 'var(--radius-md)',
-    fontWeight: '600',
-    border: 'none',
-    cursor: disabled || loading ? 'not-allowed' : 'pointer',
-    transition: 'all 0.2s ease',
+  const baseStyles = {
     display: 'inline-flex',
     alignItems: 'center',
     justifyContent: 'center',
-    width: fullWidth ? '100%' : 'auto',
+    border: 'none',
+    borderRadius: tokens.borderRadius.md,
+    fontFamily: tokens.typography.fontFamily.sans.join(', '),
+    fontWeight: tokens.typography.fontWeight.medium,
+    textDecoration: 'none',
+    cursor: disabled || loading ? 'not-allowed' : 'pointer',
+    transition: tokens.transitions.fast,
     opacity: disabled ? 0.6 : 1,
-    
-    ...(variant === 'primary' && {
-      backgroundColor: 'var(--primary)',
-      color: 'white',
-    }),
-    ...(variant === 'secondary' && {
-      backgroundColor: 'var(--secondary)',
-      color: 'var(--fg)',
-    }),
-    ...(variant === 'outline' && {
-      backgroundColor: 'transparent',
-      color: 'var(--primary)',
-      border: '2px solid var(--primary)',
-    }),
-    ...(variant === 'ghost' && {
-      backgroundColor: 'transparent',
-      color: 'var(--fg)',
-    }),
-    ...(variant === 'danger' && {
-      backgroundColor: 'var(--danger)',
-      color: 'white',
-    }),
-    
-    ...style
   }
 
-  const handleClick = () => {
-    if (!disabled && !loading && onClick) {
-      onClick()
-    }
+  const sizeStyles = {
+    sm: {
+      padding: tokens.spacing.component.padding.sm,
+      fontSize: tokens.typography.fontSize.sm,
+      minHeight: '32px',
+    },
+    md: {
+      padding: tokens.spacing.component.padding.md,
+      fontSize: tokens.typography.fontSize.base,
+      minHeight: '40px',
+    },
+    lg: {
+      padding: tokens.spacing.component.padding.lg,
+      fontSize: tokens.typography.fontSize.lg,
+      minHeight: '48px',
+    },
+  }
+
+  const variantStyles = {
+    primary: {
+      backgroundColor: tokens.colors.purple100,
+      color: tokens.colors.white100,
+      '&:hover': {
+        backgroundColor: tokens.colors.purple80,
+      },
+      '&:active': {
+        backgroundColor: tokens.colors.purple100,
+      },
+    },
+    secondary: {
+      backgroundColor: 'transparent',
+      color: tokens.colors.purple100,
+      border: `1px solid ${tokens.colors.purple100}`,
+      '&:hover': {
+        backgroundColor: tokens.colors.purple10,
+      },
+      '&:active': {
+        backgroundColor: tokens.colors.purple20,
+      },
+    },
+    tertiary: {
+      backgroundColor: 'transparent',
+      color: tokens.colors.text.primary,
+      '&:hover': {
+        backgroundColor: tokens.colors.gray5,
+      },
+      '&:active': {
+        backgroundColor: tokens.colors.gray10,
+      },
+    },
+    ghost: {
+      backgroundColor: 'transparent',
+      color: tokens.colors.text.secondary,
+      '&:hover': {
+        backgroundColor: tokens.colors.gray5,
+        color: tokens.colors.text.primary,
+      },
+      '&:active': {
+        backgroundColor: tokens.colors.gray10,
+      },
+    },
+    outline: {
+      backgroundColor: 'transparent',
+      color: tokens.colors.purple100,
+      border: `1px solid ${tokens.colors.purple100}`,
+      '&:hover': {
+        backgroundColor: tokens.colors.purple10,
+      },
+      '&:active': {
+        backgroundColor: tokens.colors.purple20,
+      },
+    },
+    danger: {
+      backgroundColor: tokens.colors.red100,
+      color: tokens.colors.white100,
+      '&:hover': {
+        backgroundColor: tokens.colors.red80,
+      },
+      '&:active': {
+        backgroundColor: tokens.colors.red100,
+      },
+    },
+  }
+
+  const combinedStyles = {
+    ...baseStyles,
+    ...sizeStyles[size],
+    ...variantStyles[variant],
   }
 
   return (
     <button
-      type={type}
-      className={baseClasses}
-      style={buttonStyle}
-      onClick={handleClick}
+      style={combinedStyles}
+      className={className}
       disabled={disabled || loading}
-      data-variant={variant}
-      data-size={size}
+      {...props}
     >
+      {loading && (
+        <span
+          style={{
+            marginRight: tokens.spacing.sm,
+            width: '16px',
+            height: '16px',
+            border: `2px solid ${tokens.colors.white100}`,
+            borderTop: '2px solid transparent',
+            borderRadius: '50%',
+            animation: 'spin 1s linear infinite',
+          }}
+        />
+      )}
       {children}
     </button>
   )
 }
 
-export default BrushButton
+export default Button

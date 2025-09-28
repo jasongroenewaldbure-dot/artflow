@@ -6,6 +6,7 @@ import LoggedInLayout from '../layout/LoggedInLayout'
 
 interface NavigationContextType {
   // Add navigation context properties as needed
+  [key: string]: unknown
 }
 
 const NavigationContext = createContext<NavigationContextType | undefined>(undefined)

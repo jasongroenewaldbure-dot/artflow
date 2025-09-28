@@ -13,6 +13,9 @@ interface HorizontalFilterSystemProps {
   mediums?: FilterOption[]
   priceRanges?: FilterOption[]
   onFilterChange?: (filters: Record<string, string[]>) => void
+  onFiltersChange?: (filters: Record<string, string[]>) => void
+  totalCount?: number
+  filteredCount?: number
   className?: string
 }
 
@@ -21,6 +24,9 @@ const HorizontalFilterSystem: React.FC<HorizontalFilterSystemProps> = ({
   mediums = [],
   priceRanges = [],
   onFilterChange,
+  onFiltersChange,
+  totalCount,
+  filteredCount,
   className = ''
 }) => {
   const [selectedFilters, setSelectedFilters] = useState<Record<string, string[]>>({
@@ -40,6 +46,7 @@ const HorizontalFilterSystem: React.FC<HorizontalFilterSystemProps> = ({
     
     setSelectedFilters(newFilters)
     onFilterChange?.(newFilters)
+    onFiltersChange?.(newFilters)
   }
 
   const clearFilters = () => {
@@ -50,6 +57,7 @@ const HorizontalFilterSystem: React.FC<HorizontalFilterSystemProps> = ({
     }
     setSelectedFilters(clearedFilters)
     onFilterChange?.(clearedFilters)
+    onFiltersChange?.(clearedFilters)
   }
 
   const hasActiveFilters = Object.values(selectedFilters).some(filters => filters.length > 0)
@@ -130,6 +138,23 @@ const HorizontalFilterSystem: React.FC<HorizontalFilterSystemProps> = ({
         overflowX: 'auto'
       }}
     >
+      {(totalCount !== undefined || filteredCount !== undefined) && (
+        <div style={{ 
+          display: 'flex', 
+          alignItems: 'center', 
+          gap: 'var(--space-sm)',
+          marginRight: 'var(--space-lg)',
+          fontSize: 'var(--text-sm)',
+          color: 'var(--muted)'
+        }}>
+          <span>
+            {filteredCount !== undefined ? filteredCount : totalCount} results
+            {totalCount !== undefined && filteredCount !== undefined && filteredCount !== totalCount && (
+              <span> of {totalCount}</span>
+            )}
+          </span>
+        </div>
+      )}
       {categories.length > 0 && renderFilterGroup('Categories', categories, 'categories')}
       {mediums.length > 0 && renderFilterGroup('Mediums', mediums, 'mediums')}
       {priceRanges.length > 0 && renderFilterGroup('Price Range', priceRanges, 'priceRanges')}

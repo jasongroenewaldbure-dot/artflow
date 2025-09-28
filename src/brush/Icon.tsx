@@ -4,6 +4,7 @@ interface BrushIconProps {
   name: string
   size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl' | number
   variant?: 'default' | 'primary' | 'secondary' | 'accent' | 'muted' | 'danger' | 'warning' | 'success'
+  color?: string
   className?: string
   style?: React.CSSProperties
 }
@@ -185,15 +186,16 @@ const fallbackIcons: Record<string, string> = {
 export const BrushIcon: React.FC<BrushIconProps> = ({ 
   name, 
   size = 'md', 
-  variant = 'default', 
+  variant = 'default',
+  color,
   className = '', 
   style = {} 
 }) => {
   // Determine size value
   const sizeValue = typeof size === 'number' ? `${size}px` : sizeMap[size]
   
-  // Determine color value
-  const colorValue = variantMap[variant]
+  // Determine color value - use color prop if provided, otherwise use variant
+  const colorValue = color || variantMap[variant]
   
   // Check if we have an SVG for this icon
   const svgPath = iconSvgs[name]

@@ -1,17 +1,8 @@
 import React, { createContext, useContext, useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { User } from '@supabase/supabase-js'
-import { profileSyncService, UserProfile } from '../services/profileSync'
-
-interface Profile {
-  id: string
-  email: string
-  role: 'artist' | 'collector' | 'both'
-  display_name: string
-  avatar_url?: string
-  profile_complete: boolean
-  password_set: boolean
-}
+// import { profileSyncService, UserProfile } from '../services/profileSync'
+import { Profile } from '../types'
 
 interface AuthContextType {
   user: User | null
@@ -22,7 +13,7 @@ interface AuthContextType {
   signOut: () => Promise<void>
   signInWithMagicLink: (email: string) => Promise<void>
   resetPassword: (email: string) => Promise<void>
-  updateProfile: (data: any) => Promise<void>
+  updateProfile: (data: Record<string, unknown>) => Promise<void>
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
@@ -62,7 +53,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       // Then get the profile from profiles table using user_id
       const { data: profileData, error } = await supabase
         .from('profiles')
-        .select('display_name, full_name, role, avatar_url, created_at, profile_complete, password_set')
+        .select('display_name, full_name, role, avatar_url, created_at, updated_at, profile_complete, password_set')
         .eq('user_id', userId)
         .single()
       
@@ -79,6 +70,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         full_name: profileData.full_name || authUser.email || 'User',
         avatar_url: profileData.avatar_url,
         created_at: profileData.created_at,
+        updated_at: profileData.updated_at,
         profile_complete: profileData.profile_complete || false,
         password_set: profileData.password_set || false
       }
@@ -135,6 +127,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     } catch (error) {
       console.warn('Supabase auth listener not available:', error)
       setLoading(false)
+      return undefined
     }
   }, [])
 
@@ -201,8 +194,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           throw new Error('Failed to send verification email. Please check your email address and try again.')
         }
       }
-    } catch (error: any) {
-      if (error.message.includes('Failed to fetch') || error.message.includes('Network')) {
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+      if (errorMessage.includes('Failed to fetch') || errorMessage.includes('Network')) {
         throw new Error('Network connection issue. Please check your internet connection and try again.')
       }
       throw error
@@ -225,7 +219,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     signOut,
     signInWithMagicLink,
     resetPassword,
-    updateProfile: async (data: any) => {
+    updateProfile: async (data: Record<string, unknown>) => {
       // Placeholder implementation
       console.log('Update profile:', data)
     }

@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
-import { Search, Menu, X, Mic, Camera, ChevronDown } from 'lucide-react'
+import { Search, Menu, X, Mic, Camera } from 'lucide-react'
 import { trendingSearchService } from '../../../services/trendingSearch'
-import BrushIcon from '../../Icon'
+// import BrushIcon from '../../Icon'
 import './PublicHeader.css'
 
 const PublicHeader: React.FC = () => {
@@ -18,7 +18,7 @@ const PublicHeader: React.FC = () => {
       try {
         const keywords = await trendingSearchService.getTrendingKeywords()
         setTrendingKeywords(keywords.slice(0, 6).map(k => k.term))
-      } catch (error) {
+      } catch {
         // Fallback trending keywords
         setTrendingKeywords(['Abstract Art', 'Contemporary', 'Photography', 'Sculpture', 'Digital Art', 'Emerging Artists'])
       }
@@ -28,7 +28,7 @@ const PublicHeader: React.FC = () => {
 
   const handleVoiceSearch = () => {
     if ('webkitSpeechRecognition' in window) {
-      const recognition = new (window as any).webkitSpeechRecognition()
+      const recognition = new (window as unknown as { webkitSpeechRecognition: new () => any }).webkitSpeechRecognition()
       recognition.continuous = false
       recognition.interimResults = false
       recognition.lang = 'en-US'
@@ -61,8 +61,9 @@ const PublicHeader: React.FC = () => {
     const input = document.createElement('input')
     input.type = 'file'
     input.accept = 'image/*'
-    input.onchange = (e: any) => {
-      const file = e.target.files[0]
+    input.onchange = (e: Event) => {
+      const target = e.target as HTMLInputElement
+      const file = target.files?.[0]
       if (file) {
         // Handle image search logic here
         console.log('Image search with file:', file)

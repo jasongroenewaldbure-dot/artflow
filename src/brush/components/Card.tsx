@@ -1,81 +1,67 @@
 import React from 'react'
+import { tokens } from '../palette-tokens'
 
-interface BrushCardProps {
-  children: React.ReactNode
+export interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
   variant?: 'default' | 'elevated' | 'outlined' | 'filled'
-  padding?: 'none' | 'sm' | 'md' | 'lg' | 'xl'
-  radius?: 'none' | 'sm' | 'md' | 'lg' | 'xl'
-  interactive?: boolean
-  className?: string
-  style?: React.CSSProperties
-  onClick?: () => void
+  padding?: 'none' | 'sm' | 'md' | 'lg'
+  children: React.ReactNode
 }
 
-/**
- * Brush Design System Card Component
- */
-export const BrushCard: React.FC<BrushCardProps> = ({
-  children,
+export const Card: React.FC<CardProps> = ({
   variant = 'default',
   padding = 'md',
-  radius = 'md',
-  interactive = false,
+  children,
   className = '',
   style = {},
-  onClick
+  ...props
 }) => {
-  const baseClasses = [
-    'brush-card',
-    `brush-card--${variant}`,
-    `brush-card--padding-${padding}`,
-    `brush-card--radius-${radius}`,
-    interactive && 'brush-card--interactive',
-    onClick && 'brush-card--clickable',
-    className
-  ].filter(Boolean).join(' ')
-
-  const cardStyle: React.CSSProperties = {
-    backgroundColor: 'var(--card)',
-    border: '1px solid var(--border)',
-    borderRadius: `var(--radius-${radius})`,
-    padding: padding !== 'none' ? `var(--space-${padding})` : 0,
-    transition: 'all var(--transition-fast)',
-    
-    ...(variant === 'elevated' && {
-      boxShadow: 'var(--shadow-md)',
-    }),
-    ...(variant === 'outlined' && {
-      borderWidth: '2px',
-    }),
-    ...(variant === 'filled' && {
-      backgroundColor: 'var(--bg-alt)',
-      border: 'none',
-    }),
-    
-    ...(interactive && {
-      cursor: 'pointer',
-    }),
-    
-    ...style
+  const baseStyles = {
+    borderRadius: tokens.borderRadius.lg,
+    overflow: 'hidden',
   }
 
-  const handleClick = () => {
-    if (onClick && !interactive) {
-      onClick()
-    }
+  const variantStyles = {
+    default: {
+      backgroundColor: tokens.colors.white100,
+      border: `1px solid ${tokens.colors.border.primary}`,
+    },
+    elevated: {
+      backgroundColor: tokens.colors.white100,
+      boxShadow: tokens.shadows.lg,
+    },
+    outlined: {
+      backgroundColor: 'transparent',
+      border: `1px solid ${tokens.colors.border.secondary}`,
+    },
+    filled: {
+      backgroundColor: tokens.colors.gray5,
+      border: 'none',
+    },
+  }
+
+  const paddingStyles = {
+    none: { padding: '0' },
+    sm: { padding: tokens.spacing.sm },
+    md: { padding: tokens.spacing.md },
+    lg: { padding: tokens.spacing.lg },
+  }
+
+  const combinedStyles = {
+    ...baseStyles,
+    ...variantStyles[variant],
+    ...paddingStyles[padding],
+    ...style,
   }
 
   return (
     <div
-      className={baseClasses}
-      style={cardStyle}
-      onClick={handleClick}
-      data-variant={variant}
-      data-interactive={interactive}
+      style={combinedStyles}
+      className={className}
+      {...props}
     >
       {children}
     </div>
   )
 }
 
-export default BrushCard
+export default Card
