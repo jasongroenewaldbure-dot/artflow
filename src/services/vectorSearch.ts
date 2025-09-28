@@ -85,7 +85,7 @@ class VectorSearchService {
         artwork.medium || '',
         artwork.genre || '',
         artwork.dominant_colors?.join(' ') || '',
-        artwork.profiles?.full_name || '',
+        artwork.profiles?.[0]?.full_name || '',
         `Price: ${artwork.price || 0}`,
         `Dimensions: ${JSON.stringify(artwork.dimensions || {})}`
       ].join(' ')
@@ -187,7 +187,7 @@ class VectorSearchService {
 
       // Calculate similarities
       const similarities = artworks.map(artwork => {
-        const similarity = this.cosineSimilarity(sourceArtwork.embedding, artwork.embedding)
+        const similarity = this.cosineSimilarity((sourceArtwork as any).embedding, (artwork as any).embedding)
         return {
           ...artwork,
           similarity
@@ -210,7 +210,7 @@ class VectorSearchService {
             genre: artwork.genre,
             price: artwork.price,
             dimensions: artwork.dimensions,
-            artist_name: artwork.profiles?.full_name
+            artist_name: artwork.profiles?.[0]?.full_name
           }
         }))
     } catch (error) {
@@ -264,13 +264,13 @@ class VectorSearchService {
         .map(artist => ({
           id: artist.artist_id,
           type: 'artist' as const,
-          title: artist.profiles?.full_name || 'Unknown Artist',
-          description: artist.profiles?.bio || '',
-          imageUrl: artist.profiles?.avatar_url,
+          title: artist.profiles?.[0]?.full_name || 'Unknown Artist',
+          description: artist.profiles?.[0]?.bio || '',
+          imageUrl: artist.profiles?.[0]?.avatar_url,
           similarity: artist.similarity,
           metadata: {
             artist_id: artist.artist_id,
-            bio: artist.profiles?.bio
+            bio: artist.profiles?.[0]?.bio
           }
         }))
     } catch (error) {
@@ -351,7 +351,7 @@ class VectorSearchService {
             genre: artwork.genre,
             price: artwork.price,
             dimensions: artwork.dimensions,
-            artist_name: artwork.profiles?.full_name
+            artist_name: artwork.profiles?.[0]?.full_name
           }
         }))
     } catch (error) {

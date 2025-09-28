@@ -1,4 +1,4 @@
-import { supabase } from '@/lib/supabase';
+import { supabase } from '../lib/supabase';
 
 export interface LearningSignal {
   userId: string;
@@ -121,7 +121,7 @@ class LearningLoopsService {
         return [];
       }
 
-      const preferenceVector = this.createPreferenceVector(userPrefs.learned_preferences);
+      const preferenceVector = await this.createPreferenceVector(userPrefs.learned_preferences);
 
       const { data, error } = await supabase.rpc('get_vector_recommendations', {
         user_id: userId,
@@ -257,25 +257,58 @@ class LearningLoopsService {
     return 0.1;
   }
 
-  private createPreferenceVector(preferences: any): number[] {
-    const vector = [];
+  private async createPreferenceVector(preferences: any): Promise<number[]> {
+    const vector: number[] = [];
     
-    const mediums = ['Oil on Canvas', 'Acrylic', 'Watercolor', 'Digital', 'Photography', 'Sculpture'];
-    for (const medium of mediums) {
-      vector.push(preferences.mediums[medium] || 0);
+    try {
+      // Get dynamic mediums from database
+      const { data: mediumData } = await supabase
+        .from('artworks')
+        .select('medium')
+        .not('medium', 'is', null)
+        .limit(1000);
+      
+      const uniqueMediums = [...new Set(mediumData?.map(item => item.medium).filter(Boolean))];
+      
+      for (const medium of uniqueMediums) {
+        vector.push(preferences.mediums?.[medium] || 0);
+      }
+      
+      // Get dynamic styles from database
+      const { data: styleData } = await supabase
+        .from('artworks')
+        .select('style')
+        .not('style', 'is', null)
+        .limit(1000);
+      
+      const uniqueStyles = [...new Set(styleData?.map(item => item.style).filter(Boolean))];
+      
+      for (const style of uniqueStyles) {
+        vector.push(preferences.styles?.[style] || 0);
+      }
+      
+      // Get dynamic colors from database
+      const { data: colorData } = await supabase
+        .from('artworks')
+        .select('dominant_colors')
+        .not('dominant_colors', 'is', null)
+        .limit(1000);
+      
+      const allColors = colorData?.flatMap(item => 
+        Array.isArray(item.dominant_colors) ? item.dominant_colors : []
+      ).filter(Boolean) || [];
+      
+      const uniqueColors = [...new Set(allColors)];
+      
+      for (const color of uniqueColors) {
+        vector.push(preferences.colors?.[color] || 0);
+      }
+      
+      return vector;
+    } catch (error) {
+      console.error('Error creating preference vector:', error);
+      return [];
     }
-    
-    const styles = ['Abstract', 'Realistic', 'Contemporary', 'Traditional', 'Minimalist'];
-    for (const style of styles) {
-      vector.push(preferences.styles[style] || 0);
-    }
-    
-    const colors = ['Red', 'Blue', 'Green', 'Yellow', 'Purple', 'Orange', 'Black', 'White'];
-    for (const color of colors) {
-      vector.push(preferences.colors[color] || 0);
-    }
-    
-    return vector;
   }
 }
 

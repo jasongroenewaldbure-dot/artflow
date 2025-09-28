@@ -239,7 +239,7 @@ class StressTester {
 
       // Test safeQuery error handling
       const { data, error } = await safeQuery(
-        () => supabase.from('nonexistent_table').select('*'),
+        () => Promise.resolve({ data: null, error: { message: 'Table not found' } }),
         { fallback: null, logErrors: false }
       )
 
@@ -279,7 +279,7 @@ class StressTester {
             .from('artworks')
             .select('id, title, price')
             .limit(5)
-            .offset(index * 5)
+            .range(index * 5, (index + 1) * 5 - 1)
 
           const requestDuration = Date.now() - requestStart
           responseTimes.push(requestDuration)

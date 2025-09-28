@@ -36,7 +36,8 @@ export interface Profile {
   website?: string
   instagram?: string
   twitter?: string
-  role: 'artist' | 'collector' | 'gallery' | 'admin'
+  role: 'artist' | 'collector' | 'both'
+  password_set?: boolean
   profile_complete: boolean
   created_at: string
   updated_at: string
@@ -145,7 +146,7 @@ export interface UserPreferences {
   max_budget: number | null
   use_learned_budget: boolean | null
   learned_preferences: LearnedPreferences | null
-  live_preferences: LivePreferences | null
+  live_preferences: UserLivePreferences | null
   notification_real_time: NotificationEntityTypeSettings | null
   notification_daily: NotificationEntityTypeSettings | null
   notification_weekly: NotificationEntityTypeSettings | null
@@ -229,7 +230,7 @@ export interface LearnedPreferences {
   last_learned_update?: string
 }
 
-export interface LivePreferences {
+export interface UserLivePreferences {
   paletteBias: 'warm' | 'cool' | 'neutral' | 'vibrant' | 'muted'
   priceSensitivity: number // 0-1, 0 = budget-focused, 1 = price-insensitive
   abstractionLevel: number // 0-1, 0 = figurative, 1 = abstract

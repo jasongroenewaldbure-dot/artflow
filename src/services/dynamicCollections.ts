@@ -80,7 +80,7 @@ class DynamicCollectionsService {
 
       if (favoritesError) throw favoritesError
 
-      const artworks = favorites?.map(fav => fav.artworks).filter(Boolean) as Artwork[] || []
+      const artworks = favorites?.map(fav => fav.artworks).filter(Boolean).flat() as Artwork[] || []
 
       if (artworks.length === 0) {
         return []

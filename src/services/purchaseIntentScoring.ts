@@ -106,19 +106,19 @@ export class PurchaseIntentScoringService {
       const artistData = await this.getArtistData(artistId)
 
       // Get detailed behavioral data
-      const behavioralData = await this.getBehavioralData(contactId, artistId)
-      const artworkInteractions = await this.getArtworkInteractions(contactId, artistId)
-      const socialEngagement = await this.getSocialEngagement(contactId, artistId)
+      // const behavioralData = await this.getContactInteractions(contactId, artistId)
+      // const artworkInteractions = await this.getContactInteractions(contactId, artistId)
+      // const socialEngagement = await this.getContactInteractions(contactId, artistId)
 
       // Calculate individual score components with enhanced intelligence
-      const engagementScore = this.calculateAdvancedEngagementScore(interactions, behavioralData, artworkInteractions)
+      const engagementScore = this.calculateEngagementScore(interactions, contactProfile)
       const financialCapacityScore = this.calculateFinancialCapacityScore(contactProfile, interactions)
-      const artPreferenceAlignment = this.calculateArtPreferenceAlignment(contactProfile, artistData, artworkInteractions)
+      const artPreferenceAlignment = await this.calculateArtPreferenceAlignment(contactProfile, artistData)
       const communicationFrequency = this.calculateCommunicationFrequency(interactions)
       const pastPurchaseBehavior = this.calculatePastPurchaseBehavior(contactProfile, interactions)
-      const socialProofScore = this.calculateAdvancedSocialProofScore(contactProfile, interactions, socialEngagement)
-      const timingScore = this.calculateAdvancedTimingScore(interactions, contactProfile, behavioralData)
-      const relationshipDepth = this.calculateAdvancedRelationshipDepth(interactions, contactProfile, socialEngagement)
+      const socialProofScore = this.calculateSocialProofScore(contactProfile, interactions)
+      const timingScore = this.calculateTimingScore(interactions, contactProfile)
+      const relationshipDepth = this.calculateRelationshipDepth(interactions, contactProfile)
 
       // Calculate weighted overall score with enhanced weighting
       const overallScore = this.calculateWeightedScore({
@@ -133,12 +133,12 @@ export class PurchaseIntentScoringService {
       })
 
       // Identify risk and opportunity factors
-      const riskFactors = this.identifyAdvancedRiskFactors(contactProfile, interactions, behavioralData, overallScore)
-      const opportunityFactors = this.identifyAdvancedOpportunityFactors(contactProfile, interactions, behavioralData, socialEngagement, overallScore)
+      const riskFactors = this.identifyRiskFactors(contactProfile, interactions, overallScore)
+      const opportunityFactors = this.identifyOpportunityFactors(contactProfile, interactions, overallScore)
 
       // Generate recommendations
-      const recommendedActions = this.generateAdvancedRecommendations(contactProfile, interactions, behavioralData, overallScore)
-      const nextFollowUp = this.suggestAdvancedNextFollowUp(interactions, contactProfile, behavioralData, overallScore)
+      const recommendedActions = this.generateRecommendations(contactProfile, interactions, overallScore)
+      const nextFollowUp = this.suggestNextFollowUp(interactions, contactProfile, overallScore)
 
       // Determine priority level
       const priorityLevel = this.determinePriorityLevel(overallScore)
@@ -172,7 +172,7 @@ export class PurchaseIntentScoringService {
   }
 
   // Calculate engagement score based on interaction quality and frequency
-  private calculateEngagementScore(interactions: ContactInteraction[], contactProfile: ContactProfile): number {
+  private calculateEngagementScore(interactions: ContactInteraction[], _contactProfile: ContactProfile): number {
     if (interactions.length === 0) return 0
 
     let score = 0
@@ -254,29 +254,76 @@ export class PurchaseIntentScoringService {
   }
 
   // Calculate alignment with artist's work and style
-  private calculateArtPreferenceAlignment(contactProfile: ContactProfile, artistData: any): number {
+  private async calculateArtPreferenceAlignment(contactProfile: ContactProfile, artistData: unknown): Promise<number> {
     let score = 50 // Base score
 
     // Check if contact has shown interest in similar artists
-    if (artistData.similar_artists) {
+    if ((artistData as any).similar_artists) {
       const commonArtists = contactProfile.preferred_artists.filter(artist => 
-        artistData.similar_artists.includes(artist)
+        (artistData as any).similar_artists.includes(artist)
       )
       score += commonArtists.length * 10
     }
 
     // Check medium preferences
-    if (artistData.primary_mediums) {
+    if ((artistData as any).primary_mediums) {
       const commonMediums = contactProfile.preferred_mediums.filter(medium =>
-        artistData.primary_mediums.includes(medium)
+        (artistData as any).primary_mediums.includes(medium)
       )
       score += commonMediums.length * 8
     }
 
     // Check if contact has inquired about similar artworks
-    // This would require more detailed artwork data analysis
+    const similarArtworkInquiries = await this.getSimilarArtworkInquiries(contactProfile.id, artistData)
+    if (similarArtworkInquiries.length > 0) {
+      score += Math.min(similarArtworkInquiries.length * 5, 20)
+    }
 
     return Math.min(score, 100)
+  }
+
+  // Get similar artwork inquiries for detailed analysis
+  private async getSimilarArtworkInquiries(contactId: string, artistData: unknown): Promise<any[]> {
+    try {
+      const { data: inquiries, error } = await supabase
+        .from('artwork_inquiries')
+        .select('*')
+        .eq('contact_id', contactId)
+        .eq('status', 'active')
+        .limit(50)
+
+      if (error) {
+        console.error('Error fetching similar artwork inquiries:', error)
+        return []
+      }
+
+      // Filter inquiries for similar artworks based on medium, style, and price range
+      const similarInquiries = inquiries?.filter(inquiry => {
+        const artwork = inquiry.artwork_data
+        if (!artwork) return false
+
+        // Check medium similarity
+        const mediumMatch = (artistData as any).primary_mediums?.some((medium: string) => 
+          artwork.medium?.toLowerCase().includes(medium.toLowerCase())
+        )
+
+        // Check style similarity
+        const styleMatch = (artistData as any).primary_styles?.some((style: string) => 
+          artwork.style?.toLowerCase().includes(style.toLowerCase())
+        )
+
+        // Check price range similarity (within 50% of artist's typical range)
+        const priceMatch = artwork.price && (artistData as any).typical_price_range ? 
+          Math.abs(artwork.price - (artistData as any).typical_price_range) / (artistData as any).typical_price_range < 0.5 : false
+
+        return mediumMatch || styleMatch || priceMatch
+      }) || []
+
+      return similarInquiries
+    } catch (error) {
+      console.error('Error analyzing similar artwork inquiries:', error)
+      return []
+    }
   }
 
   // Calculate communication frequency score
@@ -385,7 +432,7 @@ export class PurchaseIntentScoringService {
   }
 
   // Calculate timing score based on recent activity and market conditions
-  private calculateTimingScore(interactions: ContactInteraction[], contactProfile: ContactProfile): number {
+  private calculateTimingScore(interactions: ContactInteraction[], _contactProfile: ContactProfile): number {
     let score = 0
 
     // Recent activity
@@ -528,16 +575,16 @@ export class PurchaseIntentScoringService {
       recommendations.push('Research contact background and preferences')
     } else if (overallScore < 50) {
       recommendations.push('Increase communication frequency')
-      recommendations.push('Share relevant artwork examples')
-      recommendations.push('Invite to upcoming exhibition or event')
+      recommendations.push('Share relevant artwork examples via email')
+      recommendations.push('Send virtual exhibition invitation')
     } else if (overallScore < 70) {
-      recommendations.push('Schedule studio visit or gallery meeting')
-      recommendations.push('Present specific artwork recommendations')
-      recommendations.push('Discuss budget and timeline')
+      recommendations.push('Schedule virtual studio tour or video call')
+      recommendations.push('Present specific artwork recommendations via digital portfolio')
+      recommendations.push('Discuss budget and timeline via secure messaging')
     } else {
-      recommendations.push('Prepare detailed proposal with pricing')
-      recommendations.push('Schedule final presentation meeting')
-      recommendations.push('Create urgency with limited-time offers')
+      recommendations.push('Prepare detailed proposal with pricing via digital presentation')
+      recommendations.push('Schedule final presentation video call')
+      recommendations.push('Create urgency with limited-time digital offers')
     }
 
     // Specific recommendations based on profile
@@ -571,11 +618,11 @@ export class PurchaseIntentScoringService {
       Math.floor((new Date().getTime() - new Date(lastInteraction.interaction_date).getTime()) / (1000 * 60 * 60 * 24)) : 999
 
     if (overallScore > 80) {
-      return 'Schedule final presentation meeting within 3 days'
+      return 'Schedule final presentation video call within 3 days'
     } else if (overallScore > 60) {
-      return 'Send detailed artwork proposal within 1 week'
+      return 'Send detailed artwork proposal via digital presentation within 1 week'
     } else if (overallScore > 40) {
-      return 'Schedule studio visit or gallery meeting within 2 weeks'
+      return 'Schedule virtual studio tour or video call within 2 weeks'
     } else if (daysSinceLastContact > 30) {
       return 'Send re-engagement email with new artwork samples'
     } else {
@@ -615,7 +662,7 @@ export class PurchaseIntentScoringService {
     return data as ContactInteraction[]
   }
 
-  private async getArtistData(artistId: string): Promise<any> {
+  private async getArtistData(artistId: string): Promise<unknown> {
     const { data, error } = await supabase
       .from('profiles')
       .select('*')
@@ -673,13 +720,33 @@ export class PurchaseIntentScoringService {
 
   // Get score history for a contact
   async getScoreHistory(contactId: string, artistId: string, days: number = 30): Promise<Array<{ date: string; score: number }>> {
-    // This would require storing historical scores in a separate table
-    // For now, return current score
-    const currentScore = await this.calculatePurchaseIntentScore(contactId, artistId)
-    return [{
-      date: currentScore.last_updated,
-      score: currentScore.overall_score
-    }]
+    try {
+      const { data: historyData, error } = await supabase
+        .from('purchase_intent_history')
+        .select('created_at, overall_score')
+        .eq('contact_id', contactId)
+        .eq('artist_id', artistId)
+        .gte('created_at', new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString())
+        .order('created_at', { ascending: true })
+
+      if (error) {
+        console.error('Error fetching score history:', error)
+        // Fallback to current score
+        const currentScore = await this.calculatePurchaseIntentScore(contactId, artistId)
+        return [{
+          date: currentScore.last_updated,
+          score: currentScore.overall_score
+        }]
+      }
+
+      return historyData?.map(item => ({
+        date: item.created_at,
+        score: item.overall_score
+      })) || []
+    } catch (error) {
+      console.error('Error getting score history:', error)
+      return []
+    }
   }
 }
 

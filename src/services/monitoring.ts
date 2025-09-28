@@ -23,7 +23,7 @@ export interface ErrorReport {
   metadata?: any
 }
 
-export interface UserAnalytics {
+interface UserAnalytics {
   userId: string
   sessionId: string
   events: UserEvent[]
@@ -331,7 +331,7 @@ class ErrorTracker {
   }
 }
 
-class UserAnalytics {
+class UserAnalyticsService {
   private static currentSession: UserAnalytics | null = null
   private static sessions: UserAnalytics[] = []
   private static maxSessions = 100
@@ -512,22 +512,22 @@ export function initializeMonitoring() {
   // Track page visibility changes
   document.addEventListener('visibilitychange', () => {
     if (document.hidden) {
-      UserAnalytics.trackEvent('page_hidden', {})
+      UserAnalyticsService.trackEvent('page_hidden', {})
     } else {
-      UserAnalytics.trackEvent('page_visible', {})
+      UserAnalyticsService.trackEvent('page_visible', {})
     }
   })
 
   // Track beforeunload
   window.addEventListener('beforeunload', () => {
-    UserAnalytics.endSession()
+    UserAnalyticsService.endSession()
   })
 
   console.log('Monitoring initialized')
 }
 
 // Export monitoring classes
-export { PerformanceMonitor, ErrorTracker, UserAnalytics }
+export { PerformanceMonitor, ErrorTracker, UserAnalyticsService as UserAnalytics }
 
 // Auto-initialize in browser
 if (typeof window !== 'undefined') {

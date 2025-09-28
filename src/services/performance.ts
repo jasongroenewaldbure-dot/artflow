@@ -35,7 +35,7 @@ export function addResourceHints() {
     link.href = resource
     link.as = 'style'
     link.onload = function() {
-      this.rel = 'stylesheet'
+      (this as HTMLLinkElement).rel = 'stylesheet'
     }
     document.head.appendChild(link)
   })

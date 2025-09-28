@@ -150,37 +150,6 @@ class ProfileCheckService {
     }
   }
 
-  /**
-   * Get all users without profiles (admin function)
-   */
-  async getUsersWithoutProfiles(): Promise<any[]> {
-    try {
-      // This requires admin access and should be implemented server-side
-      console.warn('getUsersWithoutProfiles requires admin access - implement server-side')
-      return []
-    } catch (error) {
-      console.error('ProfileCheck: Error getting users without profiles:', error)
-      return []
-    }
-  }
-
-  /**
-   * Bulk create missing profiles (admin function)
-   */
-  async bulkCreateMissingProfiles(): Promise<{
-    success: number
-    failed: number
-    errors: string[]
-  }> {
-    try {
-      // This requires admin access and should be implemented server-side
-      console.warn('bulkCreateMissingProfiles requires admin access - implement server-side')
-      return { success: 0, failed: 0, errors: ['Admin access required'] }
-    } catch (error) {
-      console.error('ProfileCheck: Error in bulk profile creation:', error)
-      return { success: 0, failed: 1, errors: [error instanceof Error ? error.message : 'Unknown error'] }
-    }
-  }
 }
 
 export const profileCheckService = new ProfileCheckService()

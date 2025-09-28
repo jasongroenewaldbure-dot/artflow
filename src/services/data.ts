@@ -104,6 +104,11 @@ export interface Catalogue {
   created_at: string
   updated_at: string
   cover_image_url?: string
+  slug?: string
+  is_public?: boolean
+  access_mode?: 'public' | 'password' | 'whitelist' | 'private'
+  password?: string | null
+  items?: any[]
   artist?: Artist
 }
 
@@ -376,7 +381,7 @@ export const fetchArtistBySlug = async (slug: string): Promise<Artist | null> =>
       updated_at: data.updated_at
     } : null
   } catch (error) {
-    handleError(error, { component: 'fetchArtist', action: 'fetch' })
+    handleError(error)
     return null
   }
 }
@@ -424,7 +429,7 @@ export const fetchArtworksByUser = async (userId: string, limit: number = 20): P
       } : undefined
     }))
   } catch (error) {
-    handleError(error, { component: 'fetchArtworks', action: 'fetch' })
+    handleError(error)
     return []
   }
 }
@@ -472,7 +477,7 @@ export const fetchCatalogueBySlugs = async (artistSlug: string, catalogueSlug: s
       }) : undefined
     } : null
   } catch (error) {
-    handleError(error, { component: 'fetchCatalogue', action: 'fetch' })
+    handleError(error)
     return null
   }
 }
@@ -527,7 +532,7 @@ export const fetchArtworkBySlugs = async (artistSlug: string, artworkSlug: strin
       }) : undefined
     } : null
   } catch (error) {
-    handleError(error, { component: 'fetchArtwork', action: 'fetch' })
+    handleError(error)
     return null
   }
 }

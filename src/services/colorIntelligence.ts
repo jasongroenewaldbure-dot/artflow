@@ -39,7 +39,7 @@ export interface RoomPalette {
 export class ColorIntelligenceService {
   
   /**
-   * Extract OKLCH palette from image
+   * Extract OKLCH palette from image with advanced color analysis
    */
   async extractOKLCHPalette(imageFile: File): Promise<ColorPalette> {
     try {
@@ -49,37 +49,157 @@ export class ColorIntelligenceService {
       
       // Load image
       const img = await this.loadImage(imageFile)
-      canvas.width = Math.min(img.width, 200) // Limit size for performance
-      canvas.height = Math.min(img.height, 200)
       
-      // Draw image to canvas
+      // Use optimal canvas size for color analysis
+      const maxSize = 300
+      const scale = Math.min(maxSize / img.width, maxSize / img.height, 1)
+      canvas.width = img.width * scale
+      canvas.height = img.height * scale
+      
+      // Draw image to canvas with high quality
+      ctx.imageSmoothingEnabled = true
+      ctx.imageSmoothingQuality = 'high'
       ctx.drawImage(img, 0, 0, canvas.width, canvas.height)
       
       // Get image data
       const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height)
       const pixels = imageData.data
       
-      // Extract colors and convert to OKLCH
+      // Advanced color extraction with multiple sampling strategies
       const colors: OKLCHColor[] = []
-      for (let i = 0; i < pixels.length; i += 16) { // Sample every 4th pixel
-        const r = pixels[i] / 255
-        const g = pixels[i + 1] / 255
-        const b = pixels[i + 2] / 255
-        const a = pixels[i + 3] / 255
-        
-        if (a > 0.5) { // Only consider opaque pixels
-          const oklch = this.rgbToOKLCH(r, g, b)
-          colors.push(oklch)
+      const colorCounts = new Map<string, number>()
+      
+      // Strategy 1: Grid sampling for even distribution
+      const gridStep = Math.max(4, Math.floor(Math.sqrt(canvas.width * canvas.height) / 50))
+      for (let y = 0; y < canvas.height; y += gridStep) {
+        for (let x = 0; x < canvas.width; x += gridStep) {
+          const i = (y * canvas.width + x) * 4
+          const r = pixels[i] / 255
+          const g = pixels[i + 1] / 255
+          const b = pixels[i + 2] / 255
+          const a = pixels[i + 3] / 255
+          
+          if (a > 0.3) { // Include semi-transparent pixels
+            const oklch = this.rgbToOKLCH(r, g, b)
+            const key = `${Math.round(oklch.l * 100)}-${Math.round(oklch.c * 100)}-${Math.round(oklch.h)}`
+            colorCounts.set(key, (colorCounts.get(key) || 0) + 1)
+            colors.push(oklch)
+          }
         }
       }
       
-      // Cluster colors and analyze palette
-      return this.analyzePalette(colors)
+      // Strategy 2: Edge detection for important colors
+      const edgeColors = this.extractEdgeColors(imageData, canvas.width, canvas.height)
+      edgeColors.forEach(oklch => {
+        const key = `${Math.round(oklch.l * 100)}-${Math.round(oklch.c * 100)}-${Math.round(oklch.h)}`
+        colorCounts.set(key, (colorCounts.get(key) || 0) + 2) // Weight edge colors more
+        colors.push(oklch)
+      })
+      
+      // Strategy 3: Center focus for main subject colors
+      const centerColors = this.extractCenterColors(imageData, canvas.width, canvas.height)
+      centerColors.forEach(oklch => {
+        const key = `${Math.round(oklch.l * 100)}-${Math.round(oklch.c * 100)}-${Math.round(oklch.h)}`
+        colorCounts.set(key, (colorCounts.get(key) || 0) + 1.5) // Weight center colors
+        colors.push(oklch)
+      })
+      
+      // Cluster colors and analyze palette with weighted importance
+      return this.analyzePalette(colors, colorCounts)
       
     } catch (error) {
       console.error('Error extracting OKLCH palette:', error)
       throw error
     }
+  }
+
+  /**
+   * Extract colors from image edges (important for composition)
+   */
+  private extractEdgeColors(imageData: ImageData, width: number, height: number): OKLCHColor[] {
+    const colors: OKLCHColor[] = []
+    const pixels = imageData.data
+    const edgeThreshold = 30 // Sensitivity for edge detection
+    
+    for (let y = 1; y < height - 1; y += 3) {
+      for (let x = 1; x < width - 1; x += 3) {
+        const i = (y * width + x) * 4
+        
+        // Sobel edge detection
+        const gx = this.getGradientX(pixels, x, y, width)
+        const gy = this.getGradientY(pixels, x, y, width)
+        const magnitude = Math.sqrt(gx * gx + gy * gy)
+        
+        if (magnitude > edgeThreshold) {
+          const r = pixels[i] / 255
+          const g = pixels[i + 1] / 255
+          const b = pixels[i + 2] / 255
+          const a = pixels[i + 3] / 255
+          
+          if (a > 0.3) {
+            colors.push(this.rgbToOKLCH(r, g, b))
+          }
+        }
+      }
+    }
+    
+    return colors
+  }
+
+  /**
+   * Extract colors from image center (main subject area)
+   */
+  private extractCenterColors(imageData: ImageData, width: number, height: number): OKLCHColor[] {
+    const colors: OKLCHColor[] = []
+    const pixels = imageData.data
+    
+    // Focus on center 40% of image
+    const centerX = width * 0.3
+    const centerY = height * 0.3
+    const centerWidth = width * 0.4
+    const centerHeight = height * 0.4
+    
+    for (let y = centerY; y < centerY + centerHeight; y += 2) {
+      for (let x = centerX; x < centerX + centerWidth; x += 2) {
+        const i = (Math.floor(y) * width + Math.floor(x)) * 4
+        const r = pixels[i] / 255
+        const g = pixels[i + 1] / 255
+        const b = pixels[i + 2] / 255
+        const a = pixels[i + 3] / 255
+        
+        if (a > 0.3) {
+          colors.push(this.rgbToOKLCH(r, g, b))
+        }
+      }
+    }
+    
+    return colors
+  }
+
+  /**
+   * Calculate gradient in X direction for edge detection
+   */
+  private getGradientX(pixels: Uint8ClampedArray, x: number, y: number, width: number): number {
+    const getPixel = (px: number, py: number) => {
+      const i = (py * width + px) * 4
+      return (pixels[i] + pixels[i + 1] + pixels[i + 2]) / 3 // Grayscale
+    }
+    
+    return getPixel(x + 1, y - 1) + 2 * getPixel(x + 1, y) + getPixel(x + 1, y + 1) -
+           getPixel(x - 1, y - 1) - 2 * getPixel(x - 1, y) - getPixel(x - 1, y + 1)
+  }
+
+  /**
+   * Calculate gradient in Y direction for edge detection
+   */
+  private getGradientY(pixels: Uint8ClampedArray, x: number, y: number, width: number): number {
+    const getPixel = (px: number, py: number) => {
+      const i = (py * width + px) * 4
+      return (pixels[i] + pixels[i + 1] + pixels[i + 2]) / 3 // Grayscale
+    }
+    
+    return getPixel(x - 1, y + 1) + 2 * getPixel(x, y + 1) + getPixel(x + 1, y + 1) -
+           getPixel(x - 1, y - 1) - 2 * getPixel(x, y - 1) - getPixel(x + 1, y - 1)
   }
 
   /**
@@ -218,9 +338,9 @@ export class ColorIntelligenceService {
   }
 
   /**
-   * Analyze color palette and determine characteristics
+   * Analyze color palette and determine characteristics with weighted importance
    */
-  private analyzePalette(colors: OKLCHColor[]): ColorPalette {
+  private analyzePalette(colors: OKLCHColor[], colorCounts?: Map<string, number>): ColorPalette {
     if (colors.length === 0) {
       return {
         dominant: [],
@@ -233,15 +353,25 @@ export class ColorIntelligenceService {
       }
     }
     
-    // Cluster colors by similarity
-    const clusters = this.clusterColors(colors, 5)
+    // Cluster colors by similarity with weighted importance
+    const clusters = this.clusterColors(colors, 5, colorCounts)
     
-    // Sort clusters by size (dominant colors first)
-    clusters.sort((a, b) => b.length - a.length)
+    // Sort clusters by weighted importance (dominant colors first)
+    clusters.sort((a, b) => {
+      const weightA = a.reduce((sum, color) => {
+        const key = `${Math.round(color.l * 100)}-${Math.round(color.c * 100)}-${Math.round(color.h)}`
+        return sum + (colorCounts?.get(key) || 1)
+      }, 0)
+      const weightB = b.reduce((sum, color) => {
+        const key = `${Math.round(color.l * 100)}-${Math.round(color.c * 100)}-${Math.round(color.h)}`
+        return sum + (colorCounts?.get(key) || 1)
+      }, 0)
+      return weightB - weightA
+    })
     
-    const dominant = clusters[0] ? [this.getClusterCenter(clusters[0])] : []
-    const accent = clusters[1] ? [this.getClusterCenter(clusters[1])] : []
-    const neutral = clusters.slice(2).map(cluster => this.getClusterCenter(cluster))
+    const dominant = clusters[0] ? [this.getClusterCenter(clusters[0], colorCounts)] : []
+    const accent = clusters[1] ? [this.getClusterCenter(clusters[1], colorCounts)] : []
+    const neutral = clusters.slice(2).map(cluster => this.getClusterCenter(cluster, colorCounts))
     
     // Analyze palette characteristics
     const avgLightness = colors.reduce((sum, c) => sum + c.l, 0) / colors.length
@@ -312,7 +442,7 @@ export class ColorIntelligenceService {
     })
   }
 
-  private clusterColors(colors: OKLCHColor[], k: number): OKLCHColor[][] {
+  private clusterColors(colors: OKLCHColor[], k: number, colorCounts?: Map<string, number>): OKLCHColor[][] {
     // Simple k-means clustering in OKLCH space
     if (colors.length <= k) return colors.map(c => [c])
     
@@ -352,14 +482,38 @@ export class ColorIntelligenceService {
     return clusters.filter(cluster => cluster.length > 0)
   }
 
-  private getClusterCenter(colors: OKLCHColor[]): OKLCHColor {
+  private getClusterCenter(colors: OKLCHColor[], colorCounts?: Map<string, number>): OKLCHColor {
     if (colors.length === 0) return { l: 0, c: 0, h: 0 }
     
-    const avgL = colors.reduce((sum, c) => sum + c.l, 0) / colors.length
-    const avgC = colors.reduce((sum, c) => sum + c.c, 0) / colors.length
-    const avgH = this.calculateAverageHue(colors.map(c => c.h))
-    
-    return { l: avgL, c: avgC, h: avgH }
+    if (colorCounts) {
+      // Weighted average based on color importance
+      let totalWeight = 0
+      let weightedL = 0
+      let weightedC = 0
+      let weightedH = 0
+      
+      colors.forEach(color => {
+        const key = `${Math.round(color.l * 100)}-${Math.round(color.c * 100)}-${Math.round(color.h)}`
+        const weight = colorCounts.get(key) || 1
+        totalWeight += weight
+        weightedL += color.l * weight
+        weightedC += color.c * weight
+        weightedH += color.h * weight
+      })
+      
+      return {
+        l: weightedL / totalWeight,
+        c: weightedC / totalWeight,
+        h: weightedH / totalWeight
+      }
+    } else {
+      // Simple average
+      const avgL = colors.reduce((sum, c) => sum + c.l, 0) / colors.length
+      const avgC = colors.reduce((sum, c) => sum + c.c, 0) / colors.length
+      const avgH = this.calculateAverageHue(colors.map(c => c.h))
+      
+      return { l: avgL, c: avgC, h: avgH }
+    }
   }
 
   private calculateAverageHue(hues: number[]): number {
@@ -454,7 +608,7 @@ export class ColorIntelligenceService {
     else if (h < 330) baseName = 'purple'
     
     // Add modifiers based on lightness and chroma
-    const modifiers = []
+    const modifiers: string[] = []
     
     if (l > 0.8) modifiers.push('light')
     else if (l < 0.3) modifiers.push('dark')

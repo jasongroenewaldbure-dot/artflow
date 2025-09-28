@@ -1,5 +1,7 @@
 // Comprehensive Security and Validation Service
 import { supabase } from '../lib/supabase'
+import DOMPurify from 'dompurify'
+import CryptoJS from 'crypto-js'
 
 // Input validation patterns
 export const VALIDATION_PATTERNS = {
@@ -27,11 +29,25 @@ export function sanitizeInput(input: string): string {
 export function sanitizeHtml(html: string): string {
   if (typeof html !== 'string') return ''
   
-  // Basic HTML sanitization - in production, use a library like DOMPurify
-  return html
-    .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
-    .replace(/<iframe\b[^<]*(?:(?!<\/iframe>)<[^<]*)*<\/iframe>/gi, '')
-    .replace(/on\w+\s*=\s*["'][^"']*["']/gi, '')
+  // Use DOMPurify for robust HTML sanitization
+  const clean = DOMPurify.sanitize(html, {
+    ALLOWED_TAGS: [
+      'p', 'br', 'strong', 'em', 'u', 'b', 'i', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
+      'ul', 'ol', 'li', 'blockquote', 'a', 'span', 'div'
+    ],
+    ALLOWED_ATTR: ['href', 'title', 'class', 'id'],
+    ALLOW_DATA_ATTR: false,
+    ALLOW_UNKNOWN_PROTOCOLS: false,
+    SANITIZE_DOM: true,
+    KEEP_CONTENT: true,
+    RETURN_DOM: false,
+    RETURN_DOM_FRAGMENT: false,
+    SANITIZE_NAMED_PROPS: true,
+    FORBID_TAGS: ['script', 'iframe', 'object', 'embed', 'form', 'input', 'button'],
+    FORBID_ATTR: ['onload', 'onerror', 'onclick', 'onmouseover', 'onfocus', 'onblur', 'onchange', 'onsubmit']
+  })
+  
+  return clean
 }
 
 // Validation functions
@@ -175,59 +191,314 @@ export async function validateUserSession(userId: string): Promise<boolean> {
   }
 }
 
+// Role-Based Access Control (RBAC) System
+export interface Permission {
+  resource: string
+  action: string
+  conditions?: Record<string, any>
+}
+
+export interface Role {
+  name: string
+  permissions: Permission[]
+  inherits?: string[]
+}
+
+export const ROLES: Record<string, Role> = {
+  ADMIN: {
+    name: 'ADMIN',
+    permissions: [
+      { resource: '*', action: '*' } // Admin can do everything
+    ]
+  },
+  ARTIST: {
+    name: 'ARTIST',
+    permissions: [
+      { resource: 'artwork', action: 'create' },
+      { resource: 'artwork', action: 'read', conditions: { owner: true } },
+      { resource: 'artwork', action: 'update', conditions: { owner: true } },
+      { resource: 'artwork', action: 'delete', conditions: { owner: true } },
+      { resource: 'catalogue', action: 'create' },
+      { resource: 'catalogue', action: 'read', conditions: { owner: true } },
+      { resource: 'catalogue', action: 'update', conditions: { owner: true } },
+      { resource: 'catalogue', action: 'delete', conditions: { owner: true } },
+      { resource: 'profile', action: 'read', conditions: { owner: true } },
+      { resource: 'profile', action: 'update', conditions: { owner: true } },
+      { resource: 'contact', action: 'read' },
+      { resource: 'contact', action: 'create' },
+      { resource: 'contact', action: 'update' },
+      { resource: 'analytics', action: 'read', conditions: { owner: true } }
+    ]
+  },
+  COLLECTOR: {
+    name: 'COLLECTOR',
+    permissions: [
+      { resource: 'artwork', action: 'read' },
+      { resource: 'artwork', action: 'favorite' },
+      { resource: 'artwork', action: 'save' },
+      { resource: 'artwork', action: 'share' },
+      { resource: 'artist', action: 'read' },
+      { resource: 'artist', action: 'follow' },
+      { resource: 'catalogue', action: 'read' },
+      { resource: 'catalogue', action: 'favorite' },
+      { resource: 'profile', action: 'read', conditions: { owner: true } },
+      { resource: 'profile', action: 'update', conditions: { owner: true } },
+      { resource: 'inquiry', action: 'create' },
+      { resource: 'inquiry', action: 'read', conditions: { owner: true } },
+      { resource: 'collection', action: 'read', conditions: { owner: true } },
+      { resource: 'collection', action: 'create', conditions: { owner: true } },
+      { resource: 'collection', action: 'update', conditions: { owner: true } }
+    ]
+  },
+  BOTH: {
+    name: 'BOTH',
+    inherits: ['ARTIST', 'COLLECTOR'],
+    permissions: []
+  }
+}
+
 export async function checkUserPermissions(
   userId: string, 
   resource: string, 
-  action: string
+  action: string,
+  context?: Record<string, any>
 ): Promise<boolean> {
   try {
-    // Basic permission check - in production, implement proper RBAC
     const { data: user, error } = await supabase
       .from('profiles')
-      .select('role, status')
+      .select('role, status, user_id')
       .eq('user_id', userId)
       .single()
 
     if (error || !user) return false
     if (user.status !== 'active') return false
 
-    // Admin can do everything
-    if (user.role === 'ADMIN') return true
+    const userRole = ROLES[user.role]
+    if (!userRole) return false
 
-    // Artist permissions
-    if (user.role === 'ARTIST') {
-      const artistActions = ['create_artwork', 'edit_artwork', 'delete_artwork', 'create_catalogue']
-      return artistActions.includes(action)
-    }
-
-    // Collector permissions
-    if (user.role === 'COLLECTOR') {
-      const collectorActions = ['view_artwork', 'favorite_artwork', 'create_inquiry']
-      return collectorActions.includes(action)
-    }
-
-    return false
+    // Check if user has permission
+    return await hasPermission(userRole, resource, action, context, user.user_id)
   } catch (error) {
     console.error('Error checking user permissions:', error)
     return false
   }
 }
 
-// Data encryption/decryption (basic implementation)
-export function encryptData(data: string, key: string): string {
-  // In production, use a proper encryption library like crypto-js
-  const encoded = btoa(data + ':' + key)
-  return encoded
+async function hasPermission(
+  role: Role, 
+  resource: string, 
+  action: string, 
+  context?: Record<string, any>,
+  userId?: string
+): Promise<boolean> {
+  // Check inherited roles first
+  if (role.inherits) {
+    for (const inheritedRoleName of role.inherits) {
+      const inheritedRole = ROLES[inheritedRoleName]
+      if (inheritedRole && await hasPermission(inheritedRole, resource, action, context, userId)) {
+        return true
+      }
+    }
+  }
+
+  // Check direct permissions
+  for (const permission of role.permissions) {
+    if (matchesPermission(permission, resource, action, context, userId)) {
+      return true
+    }
+  }
+
+  return false
 }
 
-export function decryptData(encryptedData: string, key: string): string | null {
+function matchesPermission(
+  permission: Permission, 
+  resource: string, 
+  action: string, 
+  context?: Record<string, any>,
+  userId?: string
+): boolean {
+  // Check resource match
+  if (permission.resource !== '*' && permission.resource !== resource) {
+    return false
+  }
+
+  // Check action match
+  if (permission.action !== '*' && permission.action !== action) {
+    return false
+  }
+
+  // Check conditions
+  if (permission.conditions) {
+    for (const [key, value] of Object.entries(permission.conditions)) {
+      if (key === 'owner' && value === true) {
+        // Check if user owns the resource
+        if (!context?.owner_id || context.owner_id !== userId) {
+          return false
+        }
+      } else if (context?.[key] !== value) {
+        return false
+      }
+    }
+  }
+
+  return true
+}
+
+// Enhanced permission checking with resource ownership
+export async function checkResourceOwnership(
+  userId: string,
+  resourceType: string,
+  resourceId: string
+): Promise<boolean> {
   try {
-    const decoded = atob(encryptedData)
-    const [data, dataKey] = decoded.split(':')
-    return dataKey === key ? data : null
+    let ownerId: string | null = null
+
+    switch (resourceType) {
+      case 'artwork':
+        const { data: artwork } = await supabase
+          .from('artworks')
+          .select('user_id')
+          .eq('id', resourceId)
+          .single()
+        ownerId = artwork?.user_id
+        break
+
+      case 'catalogue':
+        const { data: catalogue } = await supabase
+          .from('catalogues')
+          .select('user_id')
+          .eq('id', resourceId)
+          .single()
+        ownerId = catalogue?.user_id
+        break
+
+      case 'profile':
+        ownerId = resourceId === userId ? userId : null
+        break
+
+      default:
+        return false
+    }
+
+    return ownerId === userId
   } catch (error) {
+    console.error('Error checking resource ownership:', error)
+    return false
+  }
+}
+
+// Robust Data Encryption/Decryption using AES-256-GCM
+export interface EncryptionResult {
+  encrypted: string
+  iv: string
+  tag: string
+}
+
+export function encryptData(data: string, key: string): EncryptionResult {
+  try {
+    // Generate random IV for each encryption
+    const iv = CryptoJS.lib.WordArray.random(128/8)
+    
+    // Encrypt using AES-256-GCM
+    const encrypted = CryptoJS.AES.encrypt(data, key, {
+      iv: iv,
+      mode: CryptoJS.mode.GCM,
+      padding: CryptoJS.pad.NoPadding
+    })
+    
+    return {
+      encrypted: encrypted.toString(),
+      iv: iv.toString(CryptoJS.enc.Hex),
+      tag: encrypted.ciphertext.toString(CryptoJS.enc.Hex)
+    }
+  } catch (error) {
+    console.error('Encryption error:', error)
+    throw new Error('Failed to encrypt data')
+  }
+}
+
+export function decryptData(encryptionResult: EncryptionResult, key: string): string | null {
+  try {
+    const iv = CryptoJS.enc.Hex.parse(encryptionResult.iv)
+    const tag = CryptoJS.enc.Hex.parse(encryptionResult.tag)
+    
+    // Decrypt using AES-256-GCM
+    const decrypted = CryptoJS.AES.decrypt(encryptionResult.encrypted, key, {
+      iv: iv,
+      mode: CryptoJS.mode.GCM,
+      padding: CryptoJS.pad.NoPadding
+    })
+    
+    return decrypted.toString(CryptoJS.enc.Utf8)
+  } catch (error) {
+    console.error('Decryption error:', error)
     return null
   }
+}
+
+// Legacy support for simple string encryption
+export function encryptDataSimple(data: string, key: string): string {
+  try {
+    const encrypted = CryptoJS.AES.encrypt(data, key).toString()
+    return encrypted
+  } catch (error) {
+    console.error('Simple encryption error:', error)
+    throw new Error('Failed to encrypt data')
+  }
+}
+
+export function decryptDataSimple(encryptedData: string, key: string): string | null {
+  try {
+    const decrypted = CryptoJS.AES.decrypt(encryptedData, key)
+    return decrypted.toString(CryptoJS.enc.Utf8)
+  } catch (error) {
+    console.error('Simple decryption error:', error)
+    return null
+  }
+}
+
+// Hash functions for passwords and sensitive data
+export function hashPassword(password: string, salt?: string): { hash: string; salt: string } {
+  const actualSalt = salt || CryptoJS.lib.WordArray.random(128/8).toString()
+  const hash = CryptoJS.PBKDF2(password, actualSalt, {
+    keySize: 256/32,
+    iterations: 10000
+  }).toString()
+  
+  return { hash, salt: actualSalt }
+}
+
+export function verifyPassword(password: string, hash: string, salt: string): boolean {
+  try {
+    const testHash = CryptoJS.PBKDF2(password, salt, {
+      keySize: 256/32,
+      iterations: 10000
+    }).toString()
+    
+    return testHash === hash
+  } catch (error) {
+    console.error('Password verification error:', error)
+    return false
+  }
+}
+
+// Generate secure random keys
+export function generateSecureKey(length: number = 32): string {
+  return CryptoJS.lib.WordArray.random(length).toString(CryptoJS.enc.Hex)
+}
+
+// Generate secure random tokens
+export function generateSecureToken(length: number = 64): string {
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'
+  let result = ''
+  const randomBytes = CryptoJS.lib.WordArray.random(length)
+  
+  for (let i = 0; i < length; i++) {
+    result += chars.charAt(randomBytes.words[Math.floor(i / 4)] % chars.length)
+  }
+  
+  return result
 }
 
 // Audit logging

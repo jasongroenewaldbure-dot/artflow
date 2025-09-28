@@ -723,7 +723,7 @@ class ExternalDataScrapersService {
           is_active: true,
           gallery_location: 'Unknown', // Would extract from gallery info
           gallery_website: galleryUrl,
-          exhibitions: galleryInfo.exhibitions || []
+          // exhibitions: galleryInfo.exhibitions || []
         }
         
         console.log(`Found representation for ${artistName} at ${galleryName}`)
@@ -936,7 +936,7 @@ class ExternalDataScrapersService {
             galleryRepresentations: [],
             artFairParticipations: [],
             pressArticles: [],
-            stats: { error: error.message }
+            stats: { error: (error as Error).message }
           }
         }
       })

@@ -380,6 +380,15 @@ class DripsDigestsService {
 
       if (!nonOpeners?.length) return;
 
+      // Get the original email data
+      const { data: email } = await supabase
+        .from('emails')
+        .select('subject, content')
+        .eq('id', emailId)
+        .single();
+
+      if (!email) return;
+
       // Resend with modified subject line
       const modifiedSubject = this.modifySubjectForResend(email.subject);
       

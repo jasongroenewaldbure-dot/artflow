@@ -1,4 +1,5 @@
 import { supabase } from '../lib/supabase'
+import { MEDIA_TAXONOMY, GENRE_TAXONOMY } from '../lib/mediaTaxonomy'
 
 export interface BanditContext {
   userId: string
@@ -68,8 +69,8 @@ export class ContextualBanditService {
       const userModel = await this.getUserModel(context.userId)
       
       // Calculate upper confidence bounds for each arm
-      const armScores = candidateArtworks.map(arm => {
-        const features = this.extractFeatures(arm, context)
+      const armScores = await Promise.all(candidateArtworks.map(async arm => {
+        const features = await this.extractFeatures(arm, context)
         const { expectedReward, uncertainty } = this.calculateUCB(features, userModel)
         
         return {
@@ -80,7 +81,7 @@ export class ContextualBanditService {
           features,
           metadata: arm.metadata
         }
-      })
+      }))
 
       // Sort by UCB score (higher = better)
       const sortedArms = armScores.sort((a, b) => b.ucbScore - a.ucbScore)
@@ -153,7 +154,7 @@ export class ContextualBanditService {
       const arm = await this.getArmFeatures(artworkId)
       if (!arm) return
       
-      const features = this.extractFeatures(arm, context)
+      const features = await this.extractFeatures(arm, context)
       
       // Update LinUCB model
       await this.updateUserModel(userId, features, reward)
@@ -177,7 +178,7 @@ export class ContextualBanditService {
   /**
    * Extract feature vector from artwork and context
    */
-  private extractFeatures(arm: BanditArm, context: BanditContext): number[] {
+  private async extractFeatures(arm: BanditArm, context: BanditContext): Promise<number[]> {
     const features = new Array(this.featureDimension).fill(0)
     
     // Price features (normalized)
@@ -188,17 +189,18 @@ export class ContextualBanditService {
     features[2] = parseInt(context.timeOfDay.split(':')[0]) / 24 // Hour of day
     features[3] = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'].indexOf(context.dayOfWeek.toLowerCase()) / 7
     
-    // Medium features (one-hot encoding)
-    const mediums = ['oil', 'acrylic', 'digital', 'photography', 'sculpture', 'print']
-    const mediumIndex = mediums.indexOf(arm.metadata.medium.toLowerCase())
-    if (mediumIndex >= 0 && mediumIndex < 6) {
+    // Get dynamic medium and genre data
+    const dynamicData = await this.getDynamicFeatureData()
+    
+    // Medium features (one-hot encoding) - using dynamic data
+    const mediumIndex = dynamicData.mediums.indexOf(arm.metadata.medium.toLowerCase())
+    if (mediumIndex >= 0 && mediumIndex < dynamicData.mediums.length) {
       features[4 + mediumIndex] = 1
     }
     
-    // Genre features (one-hot encoding)
-    const genres = ['abstract', 'realism', 'contemporary', 'landscape', 'portrait']
-    const genreIndex = genres.indexOf(arm.metadata.genre.toLowerCase())
-    if (genreIndex >= 0 && genreIndex < 5) {
+    // Genre features (one-hot encoding) - using dynamic data
+    const genreIndex = dynamicData.genres.indexOf(arm.metadata.genre.toLowerCase())
+    if (genreIndex >= 0 && genreIndex < dynamicData.genres.length) {
       features[10 + genreIndex] = 1
     }
     
@@ -212,6 +214,119 @@ export class ContextualBanditService {
     features[19] = context.deviceType === 'mobile' ? 1 : 0 // Device type
     
     return features
+  }
+
+  private async getDynamicFeatureData(): Promise<{ mediums: string[]; genres: string[] }> {
+    try {
+      // Get mediums from database
+      const { data: mediumData } = await supabase
+        .from('artworks')
+        .select('medium')
+        .not('medium', 'is', null)
+        .eq('status', 'available')
+        .limit(1000);
+
+      // Get genres from database
+      const { data: genreData } = await supabase
+        .from('artworks')
+        .select('genre')
+        .not('genre', 'is', null)
+        .eq('status', 'available')
+        .limit(1000);
+
+      // Process mediums using global taxonomy
+      const mediumCounts: Record<string, number> = {};
+      mediumData?.forEach(artwork => {
+        if (artwork.medium) {
+          const medium = artwork.medium.toLowerCase().trim();
+          // Find matching taxonomy entry
+          const taxonomyMatch = MEDIA_TAXONOMY.find(media => 
+            media.keywords.some(keyword => keyword.toLowerCase() === medium) ||
+            media.name.toLowerCase() === medium ||
+            media.id === medium
+          );
+          
+          if (taxonomyMatch) {
+            mediumCounts[taxonomyMatch.id] = (mediumCounts[taxonomyMatch.id] || 0) + 1;
+          } else {
+            // If no taxonomy match, use the raw medium name
+            mediumCounts[medium] = (mediumCounts[medium] || 0) + 1;
+          }
+        }
+      });
+
+      // Process genres using global taxonomy
+      const genreCounts: Record<string, number> = {};
+      genreData?.forEach(artwork => {
+        if (artwork.genre) {
+          const genre = artwork.genre.toLowerCase().trim();
+          // Find matching taxonomy entry
+          const taxonomyMatch = GENRE_TAXONOMY.find(genreItem => 
+            genreItem.keywords.some(keyword => keyword.toLowerCase() === genre) ||
+            genreItem.name.toLowerCase() === genre ||
+            genreItem.id === genre
+          );
+          
+          if (taxonomyMatch) {
+            genreCounts[taxonomyMatch.id] = (genreCounts[taxonomyMatch.id] || 0) + 1;
+          } else {
+            // If no taxonomy match, use the raw genre name
+            genreCounts[genre] = (genreCounts[genre] || 0) + 1;
+          }
+        }
+      });
+
+      // Get top mediums (most popular) - prioritize taxonomy entries
+      const topMediums = Object.entries(mediumCounts)
+        .sort(([, a], [, b]) => b - a)
+        .slice(0, 6) // Limit to 6 for feature dimension
+        .map(([medium]) => {
+          // Return taxonomy name if available, otherwise return the key
+          const taxonomyEntry = MEDIA_TAXONOMY.find(m => m.id === medium);
+          return taxonomyEntry ? taxonomyEntry.name.toLowerCase() : medium;
+        });
+
+      // Get top genres (most popular) - prioritize taxonomy entries
+      const topGenres = Object.entries(genreCounts)
+        .sort(([, a], [, b]) => b - a)
+        .slice(0, 5) // Limit to 5 for feature dimension
+        .map(([genre]) => {
+          // Return taxonomy name if available, otherwise return the key
+          const taxonomyEntry = GENRE_TAXONOMY.find(g => g.id === genre);
+          return taxonomyEntry ? taxonomyEntry.name.toLowerCase() : genre;
+        });
+
+      // Fallback to top taxonomy entries if no database data
+      const fallbackMediums = MEDIA_TAXONOMY
+        .filter(media => !media.parent) // Only top-level categories
+        .slice(0, 6)
+        .map(media => media.name.toLowerCase());
+
+      const fallbackGenres = GENRE_TAXONOMY
+        .slice(0, 5)
+        .map(genre => genre.name.toLowerCase());
+
+      return {
+        mediums: topMediums.length > 0 ? topMediums : fallbackMediums,
+        genres: topGenres.length > 0 ? topGenres : fallbackGenres
+      };
+    } catch (error) {
+      console.error('Error getting dynamic feature data:', error);
+      // Fallback to taxonomy-based default values
+      const fallbackMediums = MEDIA_TAXONOMY
+        .filter(media => !media.parent) // Only top-level categories
+        .slice(0, 6)
+        .map(media => media.name.toLowerCase());
+
+      const fallbackGenres = GENRE_TAXONOMY
+        .slice(0, 5)
+        .map(genre => genre.name.toLowerCase());
+
+      return {
+        mediums: fallbackMediums,
+        genres: fallbackGenres
+      };
+    }
   }
 
   /**

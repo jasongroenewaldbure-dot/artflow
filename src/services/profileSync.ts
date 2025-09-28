@@ -6,7 +6,7 @@ export interface UserProfile {
   full_name?: string
   display_name?: string
   slug?: string
-  role: 'ARTIST' | 'COLLECTOR' | 'ADMIN'
+  role: 'ARTIST' | 'COLLECTOR' | 'BOTH'
   created_at: string
   updated_at?: string
   avatar_url?: string
@@ -26,7 +26,7 @@ export interface SupabaseUser {
     website?: string
   }
   app_metadata?: {
-    role?: 'ARTIST' | 'COLLECTOR' | 'ADMIN'
+    role?: 'ARTIST' | 'COLLECTOR' | 'BOTH' | 'ADMIN'
   }
   created_at: string
   updated_at: string
@@ -88,9 +88,9 @@ class ProfileSyncService {
       const profileData = {
         id: user.id,
         full_name: user.user_metadata?.full_name || 'User',
-        display_name: user.user_metadata?.display_name || user.user_metadata?.full_name || 'User',
-        slug: user.user_metadata?.slug || user.id,
-        role: (user.app_metadata?.role || 'COLLECTOR').toUpperCase() as 'ARTIST' | 'COLLECTOR' | 'ADMIN',
+        // display_name: user.user_metadata?.display_name || user.user_metadata?.full_name || 'User',
+        // slug: user.user_metadata?.slug || user.id,
+        role: (user.app_metadata?.role || 'COLLECTOR').toUpperCase() as 'ARTIST' | 'COLLECTOR' | 'BOTH',
         created_at: user.created_at,
         updated_at: user.updated_at || new Date().toISOString(),
         avatar_url: user.user_metadata?.avatar_url,
@@ -129,14 +129,14 @@ class ProfileSyncService {
       if (user.user_metadata?.full_name) {
         updateData.full_name = user.user_metadata.full_name
       }
-      if (user.user_metadata?.display_name) {
-        updateData.display_name = user.user_metadata.display_name
-      }
-      if (user.user_metadata?.slug) {
-        updateData.slug = user.user_metadata.slug
-      }
+      // if (user.user_metadata?.display_name) {
+      //   updateData.display_name = user.user_metadata.display_name
+      // }
+      // if (user.user_metadata?.slug) {
+      //   updateData.slug = user.user_metadata.slug
+      // }
       if (user.app_metadata?.role) {
-        updateData.role = user.app_metadata.role.toUpperCase() as 'ARTIST' | 'COLLECTOR' | 'ADMIN'
+        updateData.role = user.app_metadata.role.toUpperCase() as 'ARTIST' | 'COLLECTOR' | 'BOTH'
       }
       if (user.user_metadata?.avatar_url) {
         updateData.avatar_url = user.user_metadata.avatar_url
@@ -208,8 +208,8 @@ class ProfileSyncService {
     const missingFields: string[] = []
     const suggestions: string[] = []
 
-    if (!profile.name || profile.name.trim() === '') {
-      missingFields.push('name')
+    if (!profile.full_name || profile.full_name.trim() === '') {
+      missingFields.push('full_name')
       suggestions.push('Please add your full name')
     }
 
@@ -225,38 +225,6 @@ class ProfileSyncService {
     }
   }
 
-  /**
-   * Get all users without profiles (for admin purposes)
-   */
-  async getUsersWithoutProfiles(): Promise<SupabaseUser[]> {
-    try {
-      // This would require admin access to auth.users table
-      // For now, we'll return an empty array as this is typically handled server-side
-      console.warn('getUsersWithoutProfiles requires admin access - implement server-side')
-      return []
-    } catch (error) {
-      console.error('Error fetching users without profiles:', error)
-      return []
-    }
-  }
-
-  /**
-   * Bulk sync all authenticated users (admin function)
-   */
-  async bulkSyncProfiles(): Promise<{
-    success: number
-    failed: number
-    errors: string[]
-  }> {
-    try {
-      // This would require admin access and should be implemented server-side
-      console.warn('bulkSyncProfiles requires admin access - implement server-side')
-      return { success: 0, failed: 0, errors: ['Admin access required'] }
-    } catch (error) {
-      console.error('Error in bulk sync:', error)
-      return { success: 0, failed: 1, errors: [error instanceof Error ? error.message : 'Unknown error'] }
-    }
-  }
 }
 
 export const profileSyncService = new ProfileSyncService()

@@ -99,7 +99,7 @@ class HttpClient {
 
     // Rate limiting
     const clientId = this.getClientId()
-    if (!rateLimiter.isAllowed(clientId)) {
+    if (!rateLimiter.isAllowed()) {
       throw new ApiError(
         'Rate limit exceeded. Please try again later.',
         429,
@@ -149,7 +149,7 @@ class HttpClient {
         throw error
       }
 
-      if (error.name === 'AbortError') {
+      if ((error as Error).name === 'AbortError') {
         throw new ApiError(
           'Request timeout. Please try again.',
           408,
@@ -161,7 +161,7 @@ class HttpClient {
         'Network error. Please check your connection.',
         0,
         'NETWORK_ERROR',
-        { originalError: error.message }
+        { originalError: (error as Error).message }
       )
     }
   }

@@ -167,10 +167,10 @@ class Logger {
       level,
       message,
       context,
-      userId: this.userId,
+      userId: this.userId || undefined,
       sessionId: this.sessionId,
-      component: context?.component as string,
-      action: context?.action as string
+      component: typeof context?.component === 'string' ? context.component : undefined,
+      action: typeof context?.action === 'string' ? context.action : undefined
     }
 
     // Console logging for development
@@ -341,8 +341,9 @@ export const measureSync = <T>(
 // Initialize user tracking when auth changes
 if (typeof window !== 'undefined') {
   // Listen for auth state changes to update user context
-  window.addEventListener('auth-state-change', (event: CustomEvent) => {
-    const { user } = event.detail
+  window.addEventListener('auth-state-change', (event: Event) => {
+    const customEvent = event as CustomEvent
+    const { user } = customEvent.detail
     logger.setUserId(user?.id || null)
   })
 }

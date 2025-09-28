@@ -55,7 +55,8 @@ class FollowAlertsService {
         userId: followerId,
         type: 'artist',
         targetId: artistId,
-        criteria: { follow: true }
+        criteria: { follow: true },
+        isActive: true
       });
 
       return data;

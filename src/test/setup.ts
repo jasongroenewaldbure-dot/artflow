@@ -1,8 +1,6 @@
 // Jest setup file for testing environment
 import '@testing-library/jest-dom'
 import { configure } from '@testing-library/react'
-// Note: Using jest.fn() instead of vi for Jest compatibility
-const mockFn = () => jest.fn()
 
 // Configure testing library
 configure({ testIdAttribute: 'data-testid' })
@@ -12,87 +10,66 @@ process.env.VITE_SUPABASE_URL = 'https://test.supabase.co'
 process.env.VITE_SUPABASE_ANON_KEY = 'test-key'
 
 // Mock Supabase
-jest.mock('../lib/supabase', () => ({
-  supabase: {
-    from: jest.fn(() => ({
-      select: jest.fn(() => ({
-        eq: jest.fn(() => ({
-          single: jest.fn(() => Promise.resolve({ data: null, error: null })),
-        })),
-      })),
-    })),
-    auth: {
-      getUser: jest.fn(() => Promise.resolve({ data: { user: null }, error: null })),
-      signIn: jest.fn(() => Promise.resolve({ data: null, error: null })),
-      signOut: jest.fn(() => Promise.resolve({ error: null })),
-    },
+const mockSupabase = {
+  from: () => ({
+    select: () => ({
+      eq: () => ({
+        single: () => Promise.resolve({ data: null, error: null }),
+      }),
+    }),
+  }),
+  auth: {
+    getUser: () => Promise.resolve({ data: { user: null }, error: null }),
+    signIn: () => Promise.resolve({ data: null, error: null }),
+    signOut: () => Promise.resolve({ error: null }),
   },
-}))
+}
 
 // Mock logger
-jest.mock('../services/logger', () => ({
-  logger: {
-    debug: jest.fn(),
-    info: jest.fn(),
-    warn: jest.fn(),
-    error: jest.fn(),
-    userAction: jest.fn(),
-    performance: jest.fn(),
-  },
-  useLogger: jest.fn(() => ({
-    debug: jest.fn(),
-    info: jest.fn(),
-    warn: jest.fn(),
-    error: jest.fn(),
-    userAction: jest.fn(),
-    performance: jest.fn(),
-  })),
-}))
+const mockLogger = {
+  debug: () => {},
+  info: () => {},
+  warn: () => {},
+  error: () => {},
+  userAction: () => {},
+  performance: () => {},
+}
 
 // Mock React Router
-jest.mock('react-router-dom', () => ({
-  ...jest.requireActual('react-router-dom'),
-  useNavigate: jest.fn(() => jest.fn()),
-  useLocation: jest.fn(() => ({ pathname: '/' })),
-  useParams: jest.fn(() => ({})),
-}))
+const mockNavigate = () => {}
+const mockLocation = { pathname: '/' }
+const mockParams = {}
 
 // Mock Intersection Observer
-global.IntersectionObserver = jest.fn().mockImplementation(() => ({
-  observe: jest.fn(),
-  unobserve: jest.fn(),
-  disconnect: jest.fn(),
-}))
+const mockIntersectionObserver = () => ({
+  observe: () => {},
+  unobserve: () => {},
+  disconnect: () => {},
+})
 
 // Mock ResizeObserver
-global.ResizeObserver = jest.fn().mockImplementation(() => ({
-  observe: jest.fn(),
-  unobserve: jest.fn(),
-  disconnect: jest.fn(),
-}))
+const mockResizeObserver = () => ({
+  observe: () => {},
+  unobserve: () => {},
+  disconnect: () => {},
+})
 
 // Mock window.matchMedia
-Object.defineProperty(window, 'matchMedia', {
-  writable: true,
-  value: jest.fn().mockImplementation(query => ({
-    matches: false,
-    media: query,
-    onchange: null,
-    addListener: jest.fn(), // deprecated
-    removeListener: jest.fn(), // deprecated
-    addEventListener: jest.fn(),
-    removeEventListener: jest.fn(),
-    dispatchEvent: jest.fn(),
-  })),
+const mockMatchMedia = () => ({
+  matches: false,
+  media: '',
+  onchange: null,
+  addListener: () => {},
+  removeListener: () => {},
+  addEventListener: () => {},
+  removeEventListener: () => {},
+  dispatchEvent: () => {},
 })
 
 // Mock performance.now
-Object.defineProperty(window, 'performance', {
-  writable: true,
-  value: {
-    now: jest.fn(() => Date.now()),
-  },
-})
+const mockPerformance = {
+  now: () => Date.now(),
+}
 
 // Suppress console warnings in tests
 const originalConsoleWarn = console.warn

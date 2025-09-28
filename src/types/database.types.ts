@@ -13,7 +13,7 @@ export interface Database {
           website: string | null
           instagram: string | null
           twitter: string | null
-          role: 'artist' | 'collector' | 'gallery' | 'admin'
+          role: 'artist' | 'collector' | 'both'
           profile_complete: boolean
           created_at: string
           updated_at: string
@@ -29,7 +29,7 @@ export interface Database {
           website?: string | null
           instagram?: string | null
           twitter?: string | null
-          role?: 'artist' | 'collector' | 'gallery' | 'admin'
+          role?: 'artist' | 'collector' | 'both'
           profile_complete?: boolean
           created_at?: string
           updated_at?: string
@@ -45,7 +45,7 @@ export interface Database {
           website?: string | null
           instagram?: string | null
           twitter?: string | null
-          role?: 'artist' | 'collector' | 'gallery' | 'admin'
+          role?: 'artist' | 'collector' | 'both'
           profile_complete?: boolean
           created_at?: string
           updated_at?: string
@@ -269,7 +269,7 @@ export interface Database {
       [_ in never]: never
     }
     Enums: {
-      user_role: 'artist' | 'collector' | 'gallery' | 'admin'
+      user_role: 'artist' | 'collector' | 'both'
       artwork_availability: 'available' | 'sold' | 'reserved'
       sale_status: 'pending' | 'completed' | 'cancelled' | 'refunded'
     }

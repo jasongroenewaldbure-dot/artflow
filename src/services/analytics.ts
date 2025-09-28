@@ -99,11 +99,11 @@ class AnalyticsService {
     }
     const urlParams = new URLSearchParams(window.location.search)
     return {
-      source: urlParams.get('utm_source'),
-      medium: urlParams.get('utm_medium'),
-      campaign: urlParams.get('utm_campaign'),
-      term: urlParams.get('utm_term'),
-      content: urlParams.get('utm_content')
+      source: urlParams.get('utm_source') || undefined,
+      medium: urlParams.get('utm_medium') || undefined,
+      campaign: urlParams.get('utm_campaign') || undefined,
+      term: urlParams.get('utm_term') || undefined,
+      content: urlParams.get('utm_content') || undefined
     }
   }
 
@@ -147,12 +147,12 @@ class AnalyticsService {
         session_id: this.sessionId,
         // FIX: Conditionally access navigator.userAgent
         user_agent: typeof navigator !== 'undefined' ? navigator.userAgent : undefined,
-        referrer: referralData.referrer,
-        utm_source: utmData.source,
-        utm_medium: utmData.medium,
-        utm_campaign: utmData.campaign,
-        utm_term: utmData.term,
-        utm_content: utmData.content,
+        referrer: referralData.referrer || undefined,
+        utm_source: utmData.source || undefined,
+        utm_medium: utmData.medium || undefined,
+        utm_campaign: utmData.campaign || undefined,
+        utm_term: utmData.term || undefined,
+        utm_content: utmData.content || undefined,
         // FIX: Conditionally access window.location.href
         page_url: typeof window !== 'undefined' ? window.location.href : undefined,
         // FIX: Conditionally access document.title

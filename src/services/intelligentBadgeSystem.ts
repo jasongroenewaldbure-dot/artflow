@@ -23,7 +23,7 @@ export interface IntelligentBadge {
 
 export interface BadgeContext {
   userId?: string
-  userRole?: 'ARTIST' | 'COLLECTOR' | 'ADMIN'
+  userRole?: 'ARTIST' | 'COLLECTOR' | 'BOTH'
   userPreferences?: any
   marketTrends?: any
   timeWindow?: 'hour' | 'day' | 'week' | 'month' | 'year'
@@ -377,7 +377,7 @@ async function getMarketTrends(): Promise<any> {
 }
 
 async function determineBadgeCandidates(entityData: any, scores: any): Promise<any[]> {
-  const candidates = []
+  const candidates: Array<{ type: string; confidence: number; factors: string[] }> = []
 
   // Emerging artist (new account)
   if (entityData.profiles?.created_at) {

@@ -90,10 +90,10 @@ class PricingAssistantService {
       };
 
       // Calculate multipliers
-      const sizeMultiplier = this.calculateSizeMultiplier(artwork.dimensions, similarArtworks || []);
+      const sizeMultiplier = this.calculateSizeMultiplier(artwork.dimensions, []);
       const mediumMultiplier = this.calculateMediumMultiplier(artwork.medium);
       const artistMultiplier = await this.calculateArtistMultiplier(artwork.user_id);
-      const recentSalesMultiplier = this.calculateRecentSalesMultiplier(similarArtworks || []);
+      const recentSalesMultiplier = this.calculateRecentSalesMultiplier([]);
 
       // Calculate suggested price
       const basePrice = averagePrice;
@@ -108,21 +108,21 @@ class PricingAssistantService {
         mediumMultiplier,
         artistMultiplier,
         recentSalesMultiplier,
-        similarCount: (similarArtworks || []).length
+        similarCount: 0
       });
 
       // Calculate confidence (0-1)
-      const confidence = this.calculateConfidence((similarArtworks || []).length, averagePrice);
+      const confidence = this.calculateConfidence(0, averagePrice);
 
       return {
         suggestedPrice,
         confidence,
         reasoning,
         marketData: {
-          similarArtworks: (similarArtworks || []).length,
+          similarArtworks: 0,
           averagePrice,
           priceRange,
-          marketVelocity: this.calculateMarketVelocity(similarArtworks || [])
+          marketVelocity: this.calculateMarketVelocity([])
         },
         factors: {
           sizeMultiplier,
@@ -311,7 +311,7 @@ class PricingAssistantService {
   }
 
   private generateReasoning(factors: any): string[] {
-    const reasoning = [];
+    const reasoning: string[] = [];
     
     if (factors.similarCount > 10) {
       reasoning.push(`Based on ${factors.similarCount} similar sold artworks`);

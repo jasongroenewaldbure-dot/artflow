@@ -273,13 +273,8 @@ class TrendingSearchService {
           .sort((a, b) => b.artworkCount - a.artworkCount)
           .slice(0, 8) || []
 
-        // Generate seasonal trends (mock for now)
-        const seasonalTrends = [
-          { term: 'spring colors', seasonal: true, peakMonths: ['March', 'April', 'May'] },
-          { term: 'winter landscapes', seasonal: true, peakMonths: ['December', 'January', 'February'] },
-          { term: 'summer abstracts', seasonal: true, peakMonths: ['June', 'July', 'August'] },
-          { term: 'autumn portraits', seasonal: true, peakMonths: ['September', 'October', 'November'] }
-        ]
+        // Generate real seasonal trends based on actual data
+        const seasonalTrends = await this.generateSeasonalTrends()
 
         return {
           trendingKeywords,
@@ -339,6 +334,178 @@ class TrendingSearchService {
       console.error('Error generating search suggestions:', error)
       return []
     }
+  }
+
+  private async generateSeasonalTrends(): Promise<{ term: string; seasonal: boolean; peakMonths: string[] }[]> {
+    try {
+      // Get artwork data with creation dates
+      const { data: artworkData } = await supabase
+        .from('artworks')
+        .select('created_at, genre, medium, subject, title, description')
+        .eq('status', 'available')
+        .not('created_at', 'is', null)
+        .order('created_at', { ascending: false })
+        .limit(1000)
+
+      if (!artworkData || artworkData.length === 0) {
+        return this.getDefaultSeasonalTrends()
+      }
+
+      // Analyze seasonal patterns
+      const seasonalPatterns = this.analyzeSeasonalPatterns(artworkData)
+      
+      // Generate seasonal trends based on patterns
+      const trends = this.generateTrendsFromPatterns(seasonalPatterns)
+      
+      return trends.length > 0 ? trends : this.getDefaultSeasonalTrends()
+    } catch (error) {
+      console.error('Error generating seasonal trends:', error)
+      return this.getDefaultSeasonalTrends()
+    }
+  }
+
+  private analyzeSeasonalPatterns(artworkData: any[]): Map<string, Map<string, number>> {
+    const patterns = new Map<string, Map<string, number>>()
+    
+    // Initialize patterns for common art terms
+    const artTerms = ['abstract', 'landscape', 'portrait', 'still life', 'nature', 'urban', 'colorful', 'minimalist', 'expressionist', 'realistic']
+    
+    artTerms.forEach(term => {
+      patterns.set(term, new Map())
+      for (let month = 0; month < 12; month++) {
+        patterns.get(term)!.set(month.toString(), 0)
+      }
+    })
+
+    // Analyze each artwork
+    artworkData.forEach(artwork => {
+      const createdAt = new Date(artwork.created_at)
+      const month = createdAt.getMonth()
+      
+      // Check title and description for seasonal terms
+      const text = `${artwork.title || ''} ${artwork.description || ''}`.toLowerCase()
+      
+      // Check genre, medium, subject
+      const genre = artwork.genre?.toLowerCase() || ''
+      const medium = artwork.medium?.toLowerCase() || ''
+      const subject = artwork.subject?.toLowerCase() || ''
+      
+      // Analyze seasonal patterns
+      this.analyzeTextForSeasonalTerms(text, month, patterns)
+      this.analyzeTextForSeasonalTerms(genre, month, patterns)
+      this.analyzeTextForSeasonalTerms(medium, month, patterns)
+      this.analyzeTextForSeasonalTerms(subject, month, patterns)
+    })
+
+    return patterns
+  }
+
+  private analyzeTextForSeasonalTerms(text: string, month: number, patterns: Map<string, Map<string, number>>): void {
+    const seasonalMappings = {
+      'spring': { months: [2, 3, 4], terms: ['spring', 'bloom', 'fresh', 'green', 'renewal', 'growth', 'flowers', 'pastel', 'light', 'bright'] },
+      'summer': { months: [5, 6, 7], terms: ['summer', 'sun', 'warm', 'hot', 'beach', 'outdoor', 'vibrant', 'energetic', 'bright', 'colorful'] },
+      'autumn': { months: [8, 9, 10], terms: ['autumn', 'fall', 'harvest', 'orange', 'red', 'golden', 'warm', 'cozy', 'rustic', 'earthy'] },
+      'winter': { months: [11, 0, 1], terms: ['winter', 'cold', 'snow', 'white', 'dark', 'minimal', 'calm', 'peaceful', 'serene', 'monochrome'] }
+    }
+
+    // Check for seasonal terms
+    Object.entries(seasonalMappings).forEach(([season, data]) => {
+      data.terms.forEach(term => {
+        if (text.includes(term)) {
+          const currentCount = patterns.get(term)?.get(month.toString()) || 0
+          patterns.get(term)?.set(month.toString(), currentCount + 1)
+        }
+      })
+    })
+
+    // Check for general art terms
+    const artTermMappings = {
+      'abstract': ['abstract', 'non-representational', 'geometric', 'minimalist'],
+      'landscape': ['landscape', 'nature', 'outdoor', 'scenery', 'environment'],
+      'portrait': ['portrait', 'face', 'person', 'character', 'individual'],
+      'still life': ['still life', 'objects', 'composition', 'arrangement'],
+      'nature': ['nature', 'organic', 'natural', 'biological', 'environmental'],
+      'urban': ['urban', 'city', 'street', 'architecture', 'metropolitan'],
+      'colorful': ['colorful', 'vibrant', 'bright', 'colorful', 'rainbow'],
+      'minimalist': ['minimalist', 'simple', 'clean', 'reduced', 'essential'],
+      'expressionist': ['expressionist', 'emotional', 'intense', 'dramatic'],
+      'realistic': ['realistic', 'detailed', 'precise', 'accurate', 'lifelike']
+    }
+
+    Object.entries(artTermMappings).forEach(([term, keywords]) => {
+      keywords.forEach(keyword => {
+        if (text.includes(keyword)) {
+          const currentCount = patterns.get(term)?.get(month.toString()) || 0
+          patterns.get(term)?.set(month.toString(), currentCount + 1)
+        }
+      })
+    })
+  }
+
+  private generateTrendsFromPatterns(patterns: Map<string, Map<string, number>>): { term: string; seasonal: boolean; peakMonths: string[] }[] {
+    const trends: { term: string; seasonal: boolean; peakMonths: string[] }[] = []
+    
+    patterns.forEach((monthData, term) => {
+      const monthlyCounts = Array.from(monthData.values())
+      const totalCount = monthlyCounts.reduce((sum, count) => sum + count, 0)
+      
+      if (totalCount < 3) return // Skip terms with too few occurrences
+      
+      // Calculate variance to determine if it's seasonal
+      const avg = totalCount / 12
+      const variance = monthlyCounts.reduce((sum, count) => sum + Math.pow(count - avg, 2), 0) / 12
+      const isSeasonal = variance > avg * 0.5 // High variance indicates seasonality
+      
+      if (isSeasonal) {
+        // Find peak months (months with count > 1.5 * average)
+        const peakMonths: string[] = []
+        const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 
+                           'July', 'August', 'September', 'October', 'November', 'December']
+        
+        monthData.forEach((count, month) => {
+          if (count > avg * 1.5) {
+            peakMonths.push(monthNames[parseInt(month)])
+          }
+        })
+        
+        if (peakMonths.length > 0 && peakMonths.length < 8) { // Not too broad
+          trends.push({
+            term,
+            seasonal: true,
+            peakMonths
+          })
+        }
+      } else {
+        // Non-seasonal trend
+        trends.push({
+          term,
+          seasonal: false,
+          peakMonths: []
+        })
+      }
+    })
+
+    // Sort by total count and return top trends
+    return trends
+      .sort((a, b) => {
+        const aTotal = patterns.get(a.term) ? Array.from(patterns.get(a.term)!.values()).reduce((sum, count) => sum + count, 0) : 0
+        const bTotal = patterns.get(b.term) ? Array.from(patterns.get(b.term)!.values()).reduce((sum, count) => sum + count, 0) : 0
+        return bTotal - aTotal
+      })
+      .slice(0, 10)
+  }
+
+  private getDefaultSeasonalTrends(): { term: string; seasonal: boolean; peakMonths: string[] }[] {
+    return [
+      { term: 'spring colors', seasonal: true, peakMonths: ['March', 'April', 'May'] },
+      { term: 'winter landscapes', seasonal: true, peakMonths: ['December', 'January', 'February'] },
+      { term: 'summer abstracts', seasonal: true, peakMonths: ['June', 'July', 'August'] },
+      { term: 'autumn portraits', seasonal: true, peakMonths: ['September', 'October', 'November'] },
+      { term: 'nature art', seasonal: false, peakMonths: [] },
+      { term: 'urban scenes', seasonal: false, peakMonths: [] },
+      { term: 'abstract art', seasonal: false, peakMonths: [] },
+      { term: 'portrait painting', seasonal: false, peakMonths: [] }
+    ]
   }
 
   clearCache(): void {

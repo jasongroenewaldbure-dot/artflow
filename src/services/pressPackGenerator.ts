@@ -217,7 +217,7 @@ class PressPackGeneratorService {
     };
   }
 
-  private addCoverPage(doc: PDFDocument, data: PressPackData): void {
+  private addCoverPage(doc: any, data: PressPackData): void {
     // Title
     doc.fontSize(32)
        .font('Helvetica-Bold')
@@ -242,7 +242,7 @@ class PressPackGeneratorService {
     }
   }
 
-  private addArtistBio(doc: PDFDocument, data: PressPackData): void {
+  private addArtistBio(doc: any, data: PressPackData): void {
     doc.addPage();
     
     doc.fontSize(20)
@@ -264,7 +264,7 @@ class PressPackGeneratorService {
     }
   }
 
-  private addSelectedWorks(doc: PDFDocument, data: PressPackData): void {
+  private addSelectedWorks(doc: any, data: PressPackData): void {
     doc.addPage();
     
     doc.fontSize(20)
@@ -306,7 +306,7 @@ class PressPackGeneratorService {
     });
   }
 
-  private addExhibitions(doc: PDFDocument, data: PressPackData): void {
+  private addExhibitions(doc: any, data: PressPackData): void {
     if (data.exhibitions.length === 0) return;
 
     doc.addPage();
@@ -349,7 +349,7 @@ class PressPackGeneratorService {
     });
   }
 
-  private addHighlights(doc: PDFDocument, data: PressPackData): void {
+  private addHighlights(doc: any, data: PressPackData): void {
     doc.addPage();
     
     doc.fontSize(20)
@@ -386,7 +386,7 @@ class PressPackGeneratorService {
     }
   }
 
-  private addContactInfo(doc: PDFDocument, data: PressPackData): void {
+  private addContactInfo(doc: any, data: PressPackData): void {
     doc.addPage();
     
     doc.fontSize(20)
@@ -404,24 +404,24 @@ class PressPackGeneratorService {
     contactInfo.forEach(info => {
       doc.fontSize(12)
          .font('Helvetica')
-         .text(info, 50, yPosition);
+         .text(info || '', 50, yPosition);
       yPosition += 25;
     });
   }
 
-  private addExhibitionCover(doc: PDFDocument, data: any): void {
+  private addExhibitionCover(doc: any, data: any): void {
     // Implementation for exhibition cover
   }
 
-  private addExhibitionDetails(doc: PDFDocument, data: any): void {
+  private addExhibitionDetails(doc: any, data: any): void {
     // Implementation for exhibition details
   }
 
-  private addExhibitionWorks(doc: PDFDocument, data: any): void {
+  private addExhibitionWorks(doc: any, data: any): void {
     // Implementation for exhibition works
   }
 
-  private addExhibitionPress(doc: PDFDocument, data: any): void {
+  private addExhibitionPress(doc: any, data: any): void {
     // Implementation for exhibition press
   }
 
@@ -430,7 +430,7 @@ class PressPackGeneratorService {
     return `${dimensions.width} × ${dimensions.height} ${dimensions.unit || 'cm'}`;
   }
 
-  private async pdfToBuffer(doc: PDFDocument): Promise<Buffer> {
+  private async pdfToBuffer(doc: any): Promise<Buffer> {
     return new Promise((resolve, reject) => {
       const chunks: Buffer[] = [];
       doc.on('data', chunk => chunks.push(chunk));

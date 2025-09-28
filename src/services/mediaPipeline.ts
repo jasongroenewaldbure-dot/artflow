@@ -43,7 +43,7 @@ class MediaPipelineService {
       const dominantColors = await this.extractDominantColors(imageFile);
 
       // Generate watermarked version
-      const watermarkedUrl = await this.generateWatermark(imageFile, artworkId, artistName);
+      const watermarkedUrl = await this.generateWatermark(imageFile, artworkId, artistName || '');
 
       // Generate visualization (only for primary images of hangable media)
       let visualizationUrl;
@@ -90,16 +90,16 @@ class MediaPipelineService {
 
       if (error) throw error;
 
-      const duplicates = [];
+      const duplicates: Array<{ id: any; title: string; similarity: number; imageUrl: string }> = [];
       for (const image of similarImages || []) {
         if (image.perceptual_hash) {
           const similarity = this.calculateHashSimilarity(perceptualHash, image.perceptual_hash);
           if (similarity > 0.8) { // 80% similarity threshold
             duplicates.push({
               id: image.id,
-              title: image.artwork?.title || 'Unknown',
+              title: image.artwork?.[0]?.title || 'Unknown',
               similarity,
-              imageUrl: image.artwork?.primary_image_url || ''
+              imageUrl: image.artwork?.[0]?.primary_image_url || ''
             });
           }
         }

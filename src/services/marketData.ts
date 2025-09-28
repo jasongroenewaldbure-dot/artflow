@@ -425,7 +425,7 @@ class MarketDataService {
     comparableArtworks: any[],
     marketTrend: string
   ): string {
-    const reasons = []
+    const reasons: string[] = []
     
     if (comparableArtworks.length === 0) {
       return 'No comparable artworks found in the market. Consider pricing based on your experience level and material costs.'
@@ -478,7 +478,7 @@ class MarketDataService {
   }
 
   private generateFactorsList(factors: PricingFactors, comparableArtworks: any[]): string[] {
-    const factorsList = []
+    const factorsList: string[] = []
     
     if (factors.medium) factorsList.push(`Medium: ${factors.medium}`)
     if (factors.artwork_size_category) factorsList.push(`Size: ${factors.artwork_size_category}`)
@@ -761,7 +761,7 @@ class MarketDataService {
       const platformData: { [key: string]: any } = {}
       
       // Analyze each platform
-      const platformPromises = []
+      const platformPromises: Promise<void>[] = []
       
       if (instagram) {
         platformPromises.push(
@@ -2223,7 +2223,7 @@ class MarketDataService {
       const { data: pressData, error } = await supabase
         .from('press_coverage')
         .select('*')
-        .eq('artist_name', artistName)
+        .eq('artist_name', _artistName)
         .order('published_at', { ascending: false })
         .limit(20)
 
@@ -2235,8 +2235,8 @@ class MarketDataService {
 
       // If no data found or data is stale, scrape external sources
       if (articles.length === 0) {
-        console.log(`No press coverage found for ${artistName}, scraping external sources...`)
-        articles = await externalDataScrapers.scrapePressCoverage(artistName)
+        console.log(`No press coverage found for ${_artistName}, scraping external sources...`)
+        articles = await externalDataScrapers.scrapePressCoverage(_artistName)
       }
 
       return articles
@@ -2785,9 +2785,9 @@ class MarketDataService {
       if (profileError) throw profileError
 
       // Search for collector interest indicators
-      const collectorInterest = await this.searchCollectorInterest(profile.name)
-      const marketMentions = await this.searchMarketMentions(profile.name)
-      const galleryInquiries = await this.searchGalleryInquiries(profile.name)
+      const collectorInterest = await this.searchCollectorInterest(profile.full_name)
+      const marketMentions = await this.searchMarketMentions(profile.full_name)
+      const galleryInquiries = await this.searchGalleryInquiries(profile.full_name)
 
       return {
         collector_interest: collectorInterest,
@@ -2903,10 +2903,10 @@ class MarketDataService {
       if (profileError) throw profileError
 
       // Analyze gallery interest from multiple sources
-      const galleryInquiries = await this.analyzeGalleryInquiries(profile.name)
-      const representationOffers = await this.analyzeRepresentationOffers(profile.name)
-      const artFairInvitations = await this.analyzeArtFairInvitations(profile.name)
-      const curatorInterest = await this.analyzeCuratorInterest(profile.name)
+      const galleryInquiries = await this.analyzeGalleryInquiries(profile.full_name)
+      const representationOffers = await this.analyzeRepresentationOffers(profile.full_name)
+      const artFairInvitations = await this.analyzeArtFairInvitations(profile.full_name)
+      const curatorInterest = await this.analyzeCuratorInterest(profile.full_name)
 
       // Calculate weighted gallery interest score
       const interestScore = (
@@ -3146,8 +3146,8 @@ class MarketDataService {
         `)
         .eq('medium', factors.medium)
         .eq('status', 'available')
-        .gte('price_cents', factors.priceRange?.min * 100 || 0)
-        .lte('price_cents', factors.priceRange?.max * 100 || 999999999)
+        .gte('price_cents', (factors as any).priceRange?.min * 100 || 0)
+        .lte('price_cents', (factors as any).priceRange?.max * 100 || 999999999)
         .order('created_at', { ascending: false })
         .limit(20)
 
@@ -3162,7 +3162,7 @@ class MarketDataService {
         medium: artwork.medium,
         dimensions: artwork.dimensions,
         price_cents: artwork.price_cents,
-        artist_name: artwork.profiles?.full_name || 'Unknown Artist',
+        artist_name: artwork.profiles?.[0]?.full_name || 'Unknown Artist',
         created_at: artwork.created_at,
         source: 'Internal Database'
       }))

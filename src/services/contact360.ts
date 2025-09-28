@@ -71,9 +71,9 @@ class Contact360Service {
           timestamp: view.viewed_at,
           artwork: {
             id: view.artwork_id,
-            title: view.artwork?.title || 'Unknown',
-            image_url: view.artwork?.primary_image_url || '',
-            artist_name: view.artist?.full_name || 'Unknown'
+            title: view.artwork?.[0]?.title || 'Unknown',
+            image_url: view.artwork?.[0]?.primary_image_url || '',
+            artist_name: view.artwork?.[0]?.artist?.[0]?.full_name || 'Unknown'
           }
         })));
       }
@@ -98,9 +98,9 @@ class Contact360Service {
           timestamp: like.created_at,
           artwork: {
             id: like.artwork_id,
-            title: like.artwork?.title || 'Unknown',
-            image_url: like.artwork?.primary_image_url || '',
-            artist_name: like.artist?.full_name || 'Unknown'
+            title: like.artwork?.[0]?.title || 'Unknown',
+            image_url: like.artwork?.[0]?.primary_image_url || '',
+            artist_name: like.artist?.[0]?.full_name || 'Unknown'
           }
         })));
       }
@@ -124,9 +124,9 @@ class Contact360Service {
           timestamp: share.created_at,
           artwork: {
             id: share.artwork_id,
-            title: share.artwork?.title || 'Unknown',
-            image_url: share.artwork?.primary_image_url || '',
-            artist_name: share.artist?.full_name || 'Unknown'
+            title: share.artwork?.[0]?.title || 'Unknown',
+            image_url: share.artwork?.[0]?.primary_image_url || '',
+            artist_name: share.artist?.[0]?.full_name || 'Unknown'
           }
         })));
       }
@@ -150,9 +150,9 @@ class Contact360Service {
           timestamp: inquiry.created_at,
           artwork: {
             id: inquiry.artwork_id,
-            title: inquiry.artwork?.title || 'Unknown',
-            image_url: inquiry.artwork?.primary_image_url || '',
-            artist_name: inquiry.artist?.full_name || 'Unknown'
+            title: inquiry.artwork?.[0]?.title || 'Unknown',
+            image_url: inquiry.artwork?.[0]?.primary_image_url || '',
+            artist_name: inquiry.artist?.[0]?.full_name || 'Unknown'
           }
         })));
       }
@@ -176,9 +176,9 @@ class Contact360Service {
           timestamp: purchase.sale_date,
           artwork: {
             id: purchase.artwork_id,
-            title: purchase.artwork?.title || 'Unknown',
-            image_url: purchase.artwork?.primary_image_url || '',
-            artist_name: purchase.artist?.full_name || 'Unknown'
+            title: purchase.artwork?.[0]?.title || 'Unknown',
+            image_url: purchase.artwork?.[0]?.primary_image_url || '',
+            artist_name: purchase.artist?.[0]?.full_name || 'Unknown'
           },
           metadata: { sale_price: purchase.sale_price }
         })));

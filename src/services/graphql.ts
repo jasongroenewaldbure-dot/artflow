@@ -22,7 +22,10 @@ export const graphqlClient = createUrqlClient({
     subscriptionExchange({
       forwardSubscription: (operation) => ({
         subscribe: (sink) => ({
-          unsubscribe: wsClient.subscribe(operation, sink),
+          unsubscribe: wsClient.subscribe({
+            ...operation,
+            query: operation.query || ''
+          }, sink),
         }),
       }),
     }),
